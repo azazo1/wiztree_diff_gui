@@ -9,9 +9,15 @@
 </head>
 <body>
 <div class="container">
-    <h1>Welcome to WizTree Diff</h1>
-    <p class="description">📊 Easily compare two WizTree CSV exports and <strong>spot the biggest storage
+    <h1>Welcome to WizTree Diff<img style="height: 0.7em; padding-inline: 0.3em" src="assets/icon.png" alt=""/></h1>
+    <p class="description">📊 Conveniently compare two WizTree CSV exports and <strong>spot the biggest storage
         culprits</strong> at a glance! 🔍</p>
+
+    <!--todo 美化以下步骤介绍-->
+    <ol>
+        <li>Drag-and-Drop or click the zones below to select csv snapshot files to compare</li>
+        <li>Click diff button</li>
+    </ol>
 
     <div class="drop-zone-container">
         <label class="drop-zone" id="newFileZone">
@@ -34,6 +40,8 @@
             <input type="file" id="oldFile" accept=".csv">
         </label>
     </div>
+
+    <!--todo 添加一个按钮用于开始比较-->
 </div>
 <footer class="copyright">
     <p>Created by azazo1 • © 2025 WizTree Diff • All rights reserved</p>
