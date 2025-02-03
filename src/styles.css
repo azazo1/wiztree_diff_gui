@@ -32,7 +32,7 @@ body {
   padding: 2rem;
   min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow: hidden;
+  /*overflow: hidden;*/ /* 禁止滚动 */
 }
 
 .container {
@@ -62,8 +62,8 @@ h1 {
 }
 
 .drop-zone {
-  width: 300px;
-  height: 250px;
+  width: 30%;
+  /*height: 250px;*/
   border: 3px dashed var(--border-color);
   border-radius: 15px;
   display: flex;
@@ -84,6 +84,12 @@ h1 {
 .drop-zone.dragover {
   border-color: var(--hover-color);
   background-color: color-mix(in srgb, var(--hover-color) 15%, transparent);
+}
+
+.app-icon {
+  height: 0.7em;
+  padding-inline: 0.3em;
+  display: inline-block;
 }
 
 .csv-icon {
@@ -124,4 +130,53 @@ input[type="file"] {
 .copyright p {
   margin: 0;
   opacity: 0.8;
+}
+
+.steps-container {
+  max-width: 800px;
+  margin: 0 auto 3rem;
+  padding: 1.5rem;
+  background: var(--dropzone-bg);
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.steps {
+  list-style: none;
+  counter-reset: step-counter;
+  padding: 0;
+  margin: 0;
+  text-align: center; /* 列表整体居中 */
+}
+
+.steps li {
+  counter-increment: step-counter;
+  font-size: 1.1rem;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  padding-left: 2.5rem;
+  position: relative;
+  /*display: inline-block;*/ /* 如果文字和序号都居中 */
+  text-align: left;
+}
+
+.steps li::before {
+  content: counter(step-counter);
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.8rem;
+  height: 1.8rem;
+  line-height: 1.8rem;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.steps li:last-child {
+  margin-bottom: 0;
 }
