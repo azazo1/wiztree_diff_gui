@@ -23,3 +23,6 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+[dependencies.wiztree_diff]
+git = "https://github.com/azazo1/wiztree_diff.git"
+rev = "fbaef8996c1b5897da5d4488a9d4ee65adf77efc"
