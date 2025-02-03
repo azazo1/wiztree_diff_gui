@@ -30,7 +30,7 @@ body {
   color: var(--text-color);
   margin: 0;
   padding: 2rem;
-  /*min-height: 100vh;*/
+  min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -110,4 +110,17 @@ h1 {
 
 input[type="file"] {
   display: none;
+}
+
+.copyright {
+  text-align: center;
+  color: var(--secondary-text);
+  font-size: 0.9rem;
+  margin-top: 3rem;
+  padding: 1rem;
+}
+
+.copyright p {
+  margin: 0;
+  opacity: 0.8;
 }
