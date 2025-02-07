@@ -19,7 +19,7 @@
             <li>⚡ Click the "Diff" button to analyze changes</li>
         </ol>
     </div>
-
+    <!--todo diff 加载进度条-->
     <div class="control-panel">
         <div class="drop-zone" id="newer-file-zone">
             <!--class 和 id 不能放在 label 上, label 不支持 dragover 和 drop 事件-->
@@ -40,7 +40,14 @@
         <div class="diff-btn-container">
             <a id="version-text" href="https://github.com/azazo1/wiztree_diff_gui">Version:</a>
             <span class="flex-spring"></span>
-            <button type="button" id="diff-btn" disabled>Diff</button>
+            <button type="button" id="diff-btn" disabled>
+                <span id="diff-btn-text">Diff</span>
+                <span class="loading-dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </span>
+            </button>
         </div>
         <div class="drop-zone" id="older-file-zone">
             <label>

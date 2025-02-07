@@ -188,4 +188,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             link.setAttribute('rel', 'noopener noreferrer');
         }
     });
+    diffBtn.addEventListener("click", async () => {
+        diffBtn.classList.add("loading");
+        diffBtn.disabled = true;
+        // todo diff 然后恢复按钮状态, 进入 diff 页面
+    });
 });

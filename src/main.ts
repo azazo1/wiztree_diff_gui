@@ -122,7 +122,7 @@ function typingEffect(
                     resolve();
                     return;
                 }
-                element[attribute] =  targetText.slice(0, i);
+                element[attribute] = targetText.slice(0, i);
             }
             i += direction;
         }, interval);
@@ -242,5 +242,11 @@ window.addEventListener("DOMContentLoaded", async () => {
             // 安全建议：添加 rel="noopener noreferrer"
             link.setAttribute('rel', 'noopener noreferrer');
         }
+    });
+
+    diffBtn.addEventListener("click", async () => {
+        diffBtn.classList.add("loading");
+        diffBtn.disabled = true;
+        // todo diff 然后恢复按钮状态, 进入 diff 页面
     });
 });

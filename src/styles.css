@@ -252,8 +252,14 @@ h1 {
 .diff-btn-container {
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: space-around;
     padding: 20px 5px;
+    width: 5rem;
+}
+
+#version-text {
+    color: var(--secondary-text);
 }
 
 .flex-spring {
@@ -271,6 +277,11 @@ h1 {
     --filter-color: color-mix(in srgb, var(--confirm-button-hover-bg) 30%, transparent);
     transition: filter 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
     filter: drop-shadow(0 0 0rem var(--filter-color));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
 #diff-btn:enabled:hover {
@@ -289,6 +300,63 @@ h1 {
     background-color: var(--confirm-button-disabled-bg);
 }
 
-#version-text {
-    color: var(--secondary-text);
+#diff-btn-text {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: all 0.3s ease;
+    height: 1.5rem;
+}
+
+#diff-btn.loading #diff-btn-text {
+    opacity: 0;
+}
+
+.loading-dots {
+    height: 0;
+    opacity: 0;
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    align-items: center;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+#diff-btn.loading .loading-dots {
+    height: 1.5rem;
+    opacity: 1;
+}
+
+.dot {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    background-color: var(--confirm-button-text);
+    border-radius: 50%;
+}
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+#diff-btn.loading .dot {
+    animation: blink 1s infinite;
+}
+
+#diff-btn.loading .dot:nth-of-type(1) {
+    animation-delay: 0.4s;
+}
+
+#diff-btn.loading .dot:nth-of-type(2) {
+    animation-delay: 0.8s;
+}
+
+#diff-btn.loading .dot:nth-of-type(3) {
+    animation-delay: 1.2s;
 }
