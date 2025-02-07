@@ -16,6 +16,9 @@ try {
 catch (e) {
     console.error(`Importing Tauri failed, ${e}`);
 }
+async function getAppVersion() {
+    return await invoke("get_app_version", {});
+}
 async function offsetOfClientArea(physicalPosition) {
     // 需要考虑 windows 的窗口缩放, 比如 150% 的缩放相应就要缩小为 1.5 分之一
     const window = getCurrentWindow();
@@ -82,6 +85,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const newerFileInput = document.getElementById("newer-file-input");
     const olderFileInput = document.getElementById("older-file-input");
     const diffBtn = document.getElementById("diff-btn");
+    const versionText = document.getElementById("version-text");
     function clearDragover() {
         newerFileZone.classList.remove("dragover");
         olderFileZone.classList.remove("dragover");
@@ -177,5 +181,15 @@ window.addEventListener("DOMContentLoaded", async () => {
             filters: [{ extensions: ["csv"], name: "CSV Snapshot File" }],
         });
         selectFile(false, file);
+    });
+    versionText.innerText += await getAppVersion();
+    const links = document.querySelectorAll('a');
+    links.forEach(link => {
+        // 排除已手动设置 target 的链接
+        if (!link.hasAttribute('target')) {
+            link.setAttribute('target', '_blank');
+            // 安全建议：添加 rel="noopener noreferrer"
+            link.setAttribute('rel', 'noopener noreferrer');
+        }
     });
 });

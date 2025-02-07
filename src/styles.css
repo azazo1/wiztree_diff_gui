@@ -288,3 +288,7 @@ h1 {
     color: var(--confirm-button-disabled-text);
     background-color: var(--confirm-button-disabled-bg);
 }
+
+#version-text {
+    color: var(--secondary-text);
+}

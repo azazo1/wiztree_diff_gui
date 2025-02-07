@@ -1,18 +1,22 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
-// #[tauri::command]
-// fn diff_snapshots() {
-//     println!("Choose {} snapshot: {}", is_newer, csv_path.to_string_lossy());
-// }
+use tauri::{Manager, AppHandle};
 
-use tauri::Manager;
+#[tauri::command]
+fn get_app_version(app: AppHandle) -> String {
+    let mut v = app.package_info().version.to_string();
+    if !v.starts_with('v') {
+        v.insert(0, 'v');
+    }
+    v
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![])
+        .invoke_handler(tauri::generate_handler![get_app_version])
         .setup(|app| {
             let webview_window = app
                 .get_webview_window("main")
