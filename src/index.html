@@ -21,7 +21,7 @@
         </ol>
     </div>
 
-    <div class="drop-zone-container">
+    <div class="control-panel">
         <div class="drop-zone" id="newer-file-zone">
             <!--class 和 id 不能放在 label 上, label 不支持 dragover 和 drop 事件-->
             <label> <!--label 用于扩展 input 的范围-->
@@ -40,7 +40,10 @@
                 </button>
             </label>
         </div>
-
+        <!--
+        todo 添加一个按钮用于开始比较放在两个 zone 之间
+             按钮只会在两个 zone 都有文件的时候才会 enabled
+        -->
         <div class="drop-zone" id="older-file-zone">
             <label>
                 <span class="csv-icon"></span>
@@ -59,14 +62,6 @@
             </label>
         </div>
     </div>
-
-    <!--
-    todo 添加一个按钮用于开始比较放在两个 zone 之间
-         按钮只会在两个 zone 都有文件的时候才会 enabled
-    -->
-    <!--
-    todo 两个 zone 各自添加删除已选择的文件的按钮
-    -->
 </div>
 <footer class="copyright">
     <p>Created by azazo1 • © 2025 WizTree Diff • All rights reserved</p>

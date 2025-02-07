@@ -60,7 +60,7 @@ h1 {
     display: inline-block;
 }
 
-.drop-zone-container {
+.control-panel {
     display: flex;
     gap: 2rem;
     justify-content: center;
@@ -78,13 +78,18 @@ h1 {
     background: var(--dropzone-bg);
 }
 
-.drop-zone label {
+.drop-zone > label {
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.drop-zone.dragover > label {
+    transform: scale(1.05);
 }
 
 .drop-zone:hover {
