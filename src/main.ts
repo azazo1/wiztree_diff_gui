@@ -92,11 +92,15 @@ async function zoneFromPosition(physicalPos: { x: number, y: number }): Promise<
 }
 
 function typingEffect(
-    rawText: string,
+    element: HTMLElement,
+    attribute: string,
     targetText: string,
-    writer: (text: string) => void,
     interval: number = 7
 ): Promise<void> {
+    const rawText = element[attribute];
+    if (typeof rawText !== "string") {
+        throw new Error("Attribute must be a string");
+    }
     // 找到最长的共同前缀
     let p = 0;
     while (p < rawText.length && p < targetText.length && rawText[p] === targetText[p]) {
@@ -111,14 +115,14 @@ function typingEffect(
                 if (i <= p) {
                     direction = 1;
                 }
-                writer(rawText.slice(0, i));
+                element[attribute] = rawText.slice(0, i);
             } else {
-                if (i >= targetText.length) {
+                if (i > targetText.length) {
                     clearInterval(intervalID);
                     resolve();
                     return;
                 }
-                writer(targetText.slice(0, i));
+                element[attribute] =  targetText.slice(0, i);
             }
             i += direction;
         }, interval);
@@ -151,15 +155,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (isNewer) {
             newerSnapshotFile = path;
             newerFileZone.classList.add("has-file");
-            typingEffect(newerFilePath.innerText, path, (text) => {
-                newerFilePath.innerText = text;
-            });
+            typingEffect(newerFilePath, "innerText", path);
         } else {
             olderSnapshotFile = path;
             olderFileZone.classList.add("has-file");
-            typingEffect(olderFilePath.innerText, path, (text) => {
-                olderFilePath.innerText = text;
-            });
+            typingEffect(olderFilePath, "innerText", path);
         }
         if (newerSnapshotFile !== undefined && olderSnapshotFile !== undefined) {
             diffBtn.disabled = false;
@@ -171,18 +171,14 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (isNewer) {
             // 防止二次点击
             if (newerSnapshotFile !== undefined) {
-                typingEffect(newerFilePath.innerText, "", (text) => {
-                    newerFilePath.innerText = text;
-                }).then(() => {
+                typingEffect(newerFilePath, "innerText", "").then(() => {
                     newerFileZone.classList.remove("has-file");
                 });
             }
             newerSnapshotFile = undefined;
         } else {
             if (olderSnapshotFile !== undefined) {
-                typingEffect(olderFilePath.innerText, "", (text) => {
-                    olderFilePath.innerText = text;
-                }).then(() => {
+                typingEffect(olderFilePath, "innerText", "").then(() => {
                     olderFileZone.classList.remove("has-file");
                 });
             }
