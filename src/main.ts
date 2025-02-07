@@ -34,10 +34,18 @@ interface OpenDialogOptions {
     title?: string
 }
 
+type OpenDialogReturn<T extends OpenDialogOptions> = T['directory'] extends true
+    ? T['multiple'] extends true
+        ? string[] | null
+        : string | null
+    : T['multiple'] extends true
+        ? string[] | null
+        : string | null
+
 let invoke: (cmd: string, args: object, options?: object) => Promise<any>;
 let getCurrentWebview: () => WebviewWindow;
 let getCurrentWindow: () => Window;
-let dialogOpen: (options: OpenDialogOptions) => Promise<string[] | string | null>;
+let dialogOpen: <T extends OpenDialogOptions>(options: OpenDialogOptions) => Promise<OpenDialogReturn<T>>;
 try {
     // @ts-ignore
     invoke = window.__TAURI__.core.invoke;
@@ -79,6 +87,40 @@ async function zoneFromPosition(physicalPos: { x: number, y: number }): Promise<
     return null;
 }
 
+function typingEffect(
+    rawText: string,
+    targetText: string,
+    writer: (text: string) => void,
+    interval: number = 7
+): Promise<void> {
+    // 找到最长的共同前缀
+    let p = 0;
+    while (p < rawText.length && p < targetText.length && rawText[p] === targetText[p]) {
+        p++;
+    }
+    return new Promise((resolve) => {
+        // 先减后增
+        let i = rawText.length;
+        let direction = -1;
+        const intervalID = setInterval(() => {
+            if (direction < 0) {
+                if (i <= p) {
+                    direction = 1;
+                }
+                writer(rawText.slice(0, i));
+            } else {
+                if (i >= targetText.length) {
+                    clearInterval(intervalID);
+                    resolve();
+                    return;
+                }
+                writer(targetText.slice(0, i));
+            }
+            i += direction;
+        }, interval);
+    });
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
     let newerSnapshotFile: string | undefined = undefined;
     let olderSnapshotFile: string | undefined = undefined;
@@ -90,10 +132,57 @@ window.addEventListener("DOMContentLoaded", async () => {
     const deselectOlderFileBtn = document.getElementById("deselect-older-file-btn");
     const newerFileInput = document.getElementById("newer-file-input");
     const olderFileInput = document.getElementById("older-file-input");
+    const diffBtn = document.getElementById("diff-btn") as HTMLButtonElement;
 
     function clearDragover() {
         newerFileZone.classList.remove("dragover");
         olderFileZone.classList.remove("dragover");
+    }
+
+    function selectFile(isNewer: boolean, path: string | undefined | null) {
+        if (path === undefined || path === null || typeof path !== "string") {
+            return;
+        }
+        if (isNewer) {
+            newerSnapshotFile = path;
+            newerFileZone.classList.add("has-file");
+            typingEffect(newerFilePath.innerText, path, (text) => {
+                newerFilePath.innerText = text;
+            });
+        } else {
+            olderSnapshotFile = path;
+            olderFileZone.classList.add("has-file");
+            typingEffect(olderFilePath.innerText, path, (text) => {
+                olderFilePath.innerText = text;
+            });
+        }
+        if (newerSnapshotFile !== undefined && olderSnapshotFile !== undefined) {
+            diffBtn.disabled = false;
+        }
+    }
+
+    function deselectFile(isNewer: boolean) {
+        diffBtn.disabled = true;
+        if (isNewer) {
+            // 防止二次点击
+            if (newerSnapshotFile !== undefined) {
+                typingEffect(newerFilePath.innerText, "", (text) => {
+                    newerFilePath.innerText = text;
+                }).then(() => {
+                    newerFileZone.classList.remove("has-file");
+                });
+            }
+            newerSnapshotFile = undefined;
+        } else {
+            if (olderSnapshotFile !== undefined) {
+                typingEffect(olderFilePath.innerText, "", (text) => {
+                    olderFilePath.innerText = text;
+                }).then(() => {
+                    olderFileZone.classList.remove("has-file");
+                });
+            }
+            olderSnapshotFile = undefined;
+        }
     }
 
     const unlisten_dragdrop = await getCurrentWebview().onDragDropEvent(async (event) => {
@@ -108,18 +197,10 @@ window.addEventListener("DOMContentLoaded", async () => {
             clearDragover();
             if (zone === newerFileZone) {
                 let path = event.payload.paths[0];
-                if (path !== undefined) {
-                    newerSnapshotFile = path;
-                    newerFileZone.classList.add("has-file");
-                    newerFilePath.innerText = path;
-                }
+                selectFile(true, path);
             } else if (zone === olderFileZone) {
                 let path = event.payload.paths[0];
-                if (path !== undefined) {
-                    olderSnapshotFile = path;
-                    olderFileZone.classList.add("has-file");
-                    olderFilePath.innerText = path;
-                }
+                selectFile(false, path);
             }
         } else { // leave
             clearDragover();
@@ -127,40 +208,26 @@ window.addEventListener("DOMContentLoaded", async () => {
     })
 
     deselectNewerFileBtn.addEventListener("click", () => {
-        newerSnapshotFile = undefined;
-        newerFileZone.classList.remove("has-file");
-        newerFilePath.innerText = "";
+        deselectFile(true);
     });
     deselectOlderFileBtn.addEventListener("click", () => {
-        olderSnapshotFile = undefined;
-        olderFileZone.classList.remove("has-file");
-        olderFilePath.innerText = "";
+        deselectFile(false);
     });
 
     newerFileInput.addEventListener("click", async (e) => {
         const file = await dialogOpen({
             directory: false,
             multiple: false,
-            filters: [{extensions: ["csv"], name: ""}],
+            filters: [{extensions: ["csv"], name: "CSV Snapshot File"}],
         });
-        console.log(file);
-        if (file !== undefined && typeof file === "string") {
-            newerSnapshotFile = file;
-            newerFileZone.classList.add("has-file");
-            newerFilePath.innerText = file;
-        }
+        selectFile(true, file);
     });
     olderFileInput.addEventListener("click", async (e) => {
         const file = await dialogOpen({
             directory: false,
             multiple: false,
-            filters: [{extensions: ["csv"], name: ""}],
+            filters: [{extensions: ["csv"], name: "CSV Snapshot File"}],
         });
-        console.log(file);
-        if (file !== undefined && typeof file === "string") {
-            olderSnapshotFile = file;
-            olderFileZone.classList.add("has-file");
-            olderFilePath.innerText = file;
-        }
+        selectFile(false, file);
     });
 });

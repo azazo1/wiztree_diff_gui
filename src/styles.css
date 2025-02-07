@@ -8,6 +8,11 @@
     --dropzone-bg: #ffffff;
     --border-color: #bdc3c7;
     --icon-filter: none;
+    --confirm-button-bg: #3498db;
+    --confirm-button-text: #f1f2f6;
+    --confirm-button-hover-bg: #2980b9;
+    --confirm-button-disabled-bg: #90c6ea; /* Disabled 背景颜色 */
+    --confirm-button-disabled-text: #d9eff6; /* Disabled 文本颜色 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,6 +26,11 @@
         --dropzone-bg: #2d2d2d;
         --border-color: #3d3d3d;
         --icon-filter: invert(0.7);
+        --confirm-button-bg: #29a360; /* 按钮背景色 */
+        --confirm-button-text: #f1f2f6; /* 按钮文字颜色 */
+        --confirm-button-hover-bg: #248e53; /* 悬停时背景色 */
+        --confirm-button-disabled-bg: #4a6950; /* Disabled 背景颜色 */
+        --confirm-button-disabled-text: #5e7e71; /* Disabled 文本颜色 */
     }
 }
 
@@ -84,8 +94,9 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .drop-zone.dragover > label {
@@ -103,12 +114,13 @@ h1 {
 }
 
 .drop-zone.has-file .drop-file-text {
-    display: none;
+    height: 0;
+    opacity: 0;
 }
 
 .drop-zone.has-file .dropped-file-text {
     word-wrap: break-word;
-    max-width: 70%;
+    max-width: 15rem;
     font-size: 0.8rem;
     color: var(--secondary-text)
 }
@@ -132,7 +144,7 @@ h1 {
     color: var(--secondary-text);
     text-align: center;
     font-size: 0.9rem;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .drop-zone > label > strong:first-of-type { /*Newer Snapshot 和 Older Snapshot*/
@@ -143,26 +155,32 @@ h1 {
 }
 
 .deselect-btn {
-    position: relative;
     border: none;
-    background: none;
-}
-
-.deselect-btn img {
+    transition: all 0.3s ease;
+    position: absolute;
+    top: -1rem;
+    background-image: url("assets/close.svg");
+    background-color: #ffffff00;
+    background-repeat: no-repeat;
+    background-position: center;
     width: 0;
     height: 0;
-    position: absolute;
-    transition: 0.3s ease;
-    bottom: 0;
+    opacity: 0;
     border-radius: 50%; /*图片是个圆形的*/
-    transform: translateX(-50%); /*水平居中*/
-    filter: drop-shadow(0 0 1rem rgba(255, 0, 0, 0.4));
+    --filter-color: rgba(255, 0, 0, 0.8);
+    filter: drop-shadow(0 0 2rem var(--filter-color));
 }
 
-.drop-zone.has-file:hover .deselect-btn img {
+.deselect-btn:active {
+    transform: scale(0.9);
+    filter: drop-shadow(0 0 0.5rem var(--filter-color));
+}
+
+.drop-zone.has-file:hover .deselect-btn {
     width: 3rem;
     height: 3rem;
-    bottom: 1rem;
+    top: 1rem;
+    opacity: 1;
 }
 
 .drop-zone input[type="button"] {
@@ -229,4 +247,44 @@ h1 {
 
 .steps li:last-child {
     margin-bottom: 0;
+}
+
+.diff-btn-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 20px 5px;
+}
+
+.flex-spring {
+    flex: 1;
+}
+
+#diff-btn {
+    font-size: 1.5rem;
+    background-color: var(--confirm-button-bg);
+    color: var(--confirm-button-text);
+    border: none;
+    height: 3rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    border-radius: 10px;
+    --filter-color: color-mix(in srgb, var(--confirm-button-hover-bg) 30%, transparent);
+    transition: filter 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
+    filter: drop-shadow(0 0 0rem var(--filter-color));
+}
+
+#diff-btn:enabled:hover {
+    background-color: var(--confirm-button-hover-bg);
+    filter: drop-shadow(0 0 1rem var(--filter-color));
+    transform: translateY(-2px);
+}
+
+#diff-btn:enabled:active {
+    transform: translateY(-1px) scale(0.95);
+    filter: drop-shadow(0 0 0.5rem var(--filter-color));
+}
+
+#diff-btn:disabled {
+    color: var(--confirm-button-disabled-text);
+    background-color: var(--confirm-button-disabled-bg);
 }

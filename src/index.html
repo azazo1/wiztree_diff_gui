@@ -35,15 +35,17 @@
                     <!--通过 js 代码放置文件路径-->
                 </span>
                 <input type="button" id="newer-file-input">
-                <button type="button" id="deselect-newer-file-btn" class="deselect-btn">
-                    <img src="assets/close.svg" alt="Deselect newer snapshot">
-                </button>
+                <button type="button" id="deselect-newer-file-btn" class="deselect-btn"></button>
             </label>
         </div>
         <!--
         todo 添加一个按钮用于开始比较放在两个 zone 之间
              按钮只会在两个 zone 都有文件的时候才会 enabled
         -->
+        <div class="diff-btn-container">
+            <span class="flex-spring"></span>
+            <button type="button" id="diff-btn" disabled>Diff</button>
+        </div>
         <div class="drop-zone" id="older-file-zone">
             <label>
                 <span class="csv-icon"></span>
@@ -56,9 +58,7 @@
                     <!--通过 js 代码放置文件路径-->
                 </span>
                 <input type="button" id="older-file-input">
-                <button type="button" id="deselect-older-file-btn" class="deselect-btn">
-                    <img src="assets/close.svg" alt="Deselect older snapshot">
-                </button>
+                <button type="button" id="deselect-older-file-btn" class="deselect-btn"></button>
             </label>
         </div>
     </div>
