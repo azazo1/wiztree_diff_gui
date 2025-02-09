@@ -159,44 +159,6 @@ function typingEffect(
     });
 }
 
-/**
- * 弹窗消失时返回, 返回用户是否点击了关闭按钮.
- * */
-async function showToast(
-    message: string,
-    type: 'info' | 'warning' | 'error' = 'info',
-    duration = 3000
-) {
-    return new Promise<boolean>((resolve) => {
-        console.log(`toasted ${type}:`)
-        console.log(message);
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        // @ts-ignore
-        toast.resolvePromise = resolve;
-        toast.innerHTML = `
-            <span class="toast-icon"></span>
-            <div class="toast-text">${JSON.stringify(message)}</div>
-            <span class="toast-close" onclick="
-                this.parentElement.classList.remove('show');
-                this.parentElement.resolvePromise(true);
-            ">&times;</span>
-        `;
-
-        document.body.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 10); // 为了触发动画, 不能立刻添加
-        setTimeout(() => {
-            if (toast.classList.contains('show')) {
-                toast.classList.remove('show');
-                resolve(false);
-            }
-            setTimeout(() => {
-                toast.remove();
-            }, 500);
-        }, duration);
-    });
-}
-
 window.addEventListener("DOMContentLoaded", async () => {
     let newerSnapshotFile: string | undefined = undefined;
     let olderSnapshotFile: string | undefined = undefined;
@@ -321,7 +283,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         diffBtn.classList.add("loading");
         diffBtn.disabled = true;
         try {
-            // todo 进入 diff 页面
             if (newerSnapshotFile === undefined || olderSnapshotFile === undefined) {
                 // unreachable
                 showToast("input file not ready");
@@ -332,6 +293,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                 // todo 更新显示进度条
             }
             await diff(newerSnapshotFile, olderSnapshotFile, channel)
+            // todo 进入 diff 页面
         } catch (e) {
             showToast(e, 'error', 5000);
         } finally {

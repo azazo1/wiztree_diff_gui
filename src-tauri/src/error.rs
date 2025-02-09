@@ -4,7 +4,7 @@ use serde::Serialize;
 pub enum Error {
     #[error(transparent)]
     Diff(#[from] wiztree_diff::Error),
-    #[error("Failed to lock Mutex")]
+    #[error("Failed to lock Mutex: {0}")]
     Lock(String),
 }
 

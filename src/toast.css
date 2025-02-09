@@ -1,0 +1,74 @@
+.toast {
+    min-width: 10rem;
+    background-color: var(--toast-bg);
+    color: var(--toast-text);
+    border: 1px solid var(--toast-border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    position: fixed;
+    z-index: 999;
+    right: 30px;
+    bottom: 30px;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s, background-color 0.3s;
+    transform: translateY(100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.toast.info {
+    border-left: 4px solid var(--info-main);
+}
+
+.toast.warning {
+    border-left: 4px solid var(--warning-main);
+}
+
+.toast.error {
+    border-left: 4px solid var(--error-main);
+}
+
+.toast.info .toast-icon:before {
+    content: "ℹ️";
+}
+
+.toast.warning .toast-icon:before {
+    content: "⚠️";
+}
+
+.toast.error .toast-icon:before {
+    content: "❌";
+}
+
+.toast-close {
+    color: var(--close-color);
+    font-weight: bold;
+    margin-left: 20px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.toast-close:hover {
+    opacity: 1;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-text {
+    max-width: 50vw;
+    word-wrap: break-word;
+}
+
+.toast .toast-icon {
+    margin-right: 0.5rem;
+}
+
+.toast .toast-icon:before {
+    font-size: 1.5rem;
+}
