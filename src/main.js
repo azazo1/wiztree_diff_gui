@@ -1,23 +1,12 @@
 'use strict';
-let invoke;
-let getCurrentWebview;
-let getCurrentWindow;
-let dialogOpen;
 // @ts-ignore
-const Channel = window.__TAURI__.core.Channel;
-try {
-    // @ts-ignore
-    invoke = window.__TAURI__.core.invoke;
-    // @ts-ignore
-    getCurrentWebview = window.__TAURI__.webview.getCurrentWebview;
-    // @ts-ignore
-    getCurrentWindow = window.__TAURI__.window.getCurrentWindow;
-    // @ts-ignore
-    dialogOpen = window.__TAURI_PLUGIN_DIALOG__.open;
-}
-catch (e) {
-    console.error(`Importing Tauri failed, ${e}`);
-}
+const { Channel, invoke } = window.__TAURI__.core;
+// @ts-ignore
+const { getCurrentWebview } = window.__TAURI__.webview;
+// @ts-ignore
+const { getCurrentWindow } = window.__TAURI__.window;
+// @ts-ignore
+let dialogOpen = window.__TAURI_PLUGIN_DIALOG__.open;
 async function getAppVersion() {
     return await invoke("get_app_version", {});
 }
@@ -210,7 +199,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         try {
             if (newerSnapshotFile === undefined || olderSnapshotFile === undefined) {
                 // unreachable
-                showToast("input file not ready");
+                showToast("input file not ready", 'error');
                 return;
             }
             let channel = new Channel("diff");

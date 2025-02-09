@@ -1,15 +1,5 @@
 'use strict';
 
-interface WebviewWindow {
-    onDragDropEvent: (callback: (event: DragDropEvent) => void) => Promise<() => void>;
-}
-
-interface Window {
-    innerPosition: () => Promise<{ x: number, y: number }>
-    outerPosition: () => Promise<{ x: number, y: number }>
-    scaleFactor: () => Promise<number>
-}
-
 interface DragDropEvent {
     event: "tauri://drag-over",
     id: number,
@@ -23,24 +13,6 @@ interface DragDropEvent {
         type: "drop" | "over" | "leave"
     }
 }
-
-interface OpenDialogOptions {
-    canCreateDirectories?: boolean,
-    defaultPath?: string,
-    filters?: { name: string, extensions: string[] }[],
-    multiple?: boolean,
-    directory?: boolean,
-    recursive?: boolean,
-    title?: string
-}
-
-type OpenDialogReturn<T extends OpenDialogOptions> = T['directory'] extends true
-    ? T['multiple'] extends true
-        ? string[] | null
-        : string | null
-    : T['multiple'] extends true
-        ? string[] | null
-        : string | null
 
 type Message = {
     type: "Start",
@@ -69,33 +41,20 @@ type LoadingMsg = {
     msg: Message
 }
 
-let invoke: (cmd: string, args: object, options?: object) => Promise<any>;
-let getCurrentWebview: () => WebviewWindow;
-let getCurrentWindow: () => Window;
-let dialogOpen: <T extends OpenDialogOptions>(options: OpenDialogOptions) => Promise<OpenDialogReturn<T>>;
-
-type Channel<T> = {};
 // @ts-ignore
-const Channel: Channel = window.__TAURI__.core.Channel;
-
-try {
-    // @ts-ignore
-    invoke = window.__TAURI__.core.invoke;
-    // @ts-ignore
-    getCurrentWebview = window.__TAURI__.webview.getCurrentWebview;
-    // @ts-ignore
-    getCurrentWindow = window.__TAURI__.window.getCurrentWindow;
-    // @ts-ignore
-    dialogOpen = window.__TAURI_PLUGIN_DIALOG__.open;
-} catch (e) {
-    console.error(`Importing Tauri failed, ${e}`);
-}
+const {Channel, invoke} = window.__TAURI__.core;
+// @ts-ignore
+const {getCurrentWebview} = window.__TAURI__.webview;
+// @ts-ignore
+const {getCurrentWindow} = window.__TAURI__.window;
+// @ts-ignore
+let dialogOpen = window.__TAURI_PLUGIN_DIALOG__.open;
 
 async function getAppVersion(): Promise<string> {
     return await invoke("get_app_version", {});
 }
 
-async function diff(newerFile: string, olderFile: string, channel: Channel<object>): Promise<void> {
+async function diff(newerFile: string, olderFile: string, channel: "Channel<object>"): Promise<void> {
     return await invoke("diff", {channel, newerFile, olderFile});
 }
 
@@ -238,7 +197,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         syncDiffBtnDisabled();
     }
 
-    const unlistenDragDrop = await getCurrentWebview().onDragDropEvent(async (event) => {
+    const unlistenDragDrop = await getCurrentWebview().onDragDropEvent(async (event: DragDropEvent) => {
         if (event.payload.type === "over") {
             const zone = await zoneFromPosition(event.payload.position);
             clearDragover();
@@ -268,7 +227,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
 
     newerFileInput.addEventListener("click", async (e) => {
-        const file = await dialogOpen({
+        const file: string | null = await dialogOpen({
             directory: false,
             multiple: false,
             filters: [{extensions: ["csv"], name: "CSV Snapshot File"}],
@@ -276,7 +235,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         selectFile(true, file);
     });
     olderFileInput.addEventListener("click", async (e) => {
-        const file = await dialogOpen({
+        const file: string | null = await dialogOpen({
             directory: false,
             multiple: false,
             filters: [{extensions: ["csv"], name: "CSV Snapshot File"}],
@@ -302,7 +261,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         try {
             if (newerSnapshotFile === undefined || olderSnapshotFile === undefined) {
                 // unreachable
-                showToast("input file not ready");
+                showToast("input file not ready", 'error');
                 return;
             }
             let channel = new Channel<LoadingMsg>("diff");

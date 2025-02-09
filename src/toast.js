@@ -9,9 +9,16 @@ async function showToast(message, type = 'info', duration = 3000) {
         toast.className = `toast ${type}`;
         // @ts-ignore
         toast.resolvePromise = resolve;
+        let s;
+        if (typeof message !== "string") {
+            s = JSON.stringify(message);
+        }
+        else {
+            s = message;
+        }
         toast.innerHTML = `
             <span class="toast-icon"></span>
-            <div class="toast-text">${JSON.stringify(message)}</div>
+            <div class="toast-text">${s}</div>
             <span class="toast-close" onclick="
                 this.parentElement.classList.remove('show');
                 this.parentElement.resolvePromise(true);
