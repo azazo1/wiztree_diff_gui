@@ -49,6 +49,10 @@ async function zoneFromPosition(physicalPos) {
     }
     return null;
 }
+function getFileNameComponent(path) {
+    const parts = path.replaceAll("\\", "/").split("/").filter(Boolean);
+    return parts[parts.length - 1];
+}
 function typingEffect(element, attribute, targetText, interval = 7) {
     const rawText = element[attribute];
     if (typeof rawText !== "string") {
@@ -211,10 +215,30 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             let channel = new Channel("diff");
             channel.onmessage = (message) => {
-                // todo 进度条适配, 不要跳来跳去
-                if (message.msg.type === "Reading" || message.msg.type === "Processing") {
-                    progressBar.updateProgress(message.msg.data.current / message.msg.data.total * 100);
-                    progressBar.updateStatus(message.msg.type);
+                let fileNameComponent = getFileNameComponent(message.file);
+                if (message.msg.type === "Reading") {
+                    const biasFile = message.isNewer ? 0.5 : 0;
+                    const data = message.msg.data;
+                    const fracCur = data.current / data.total;
+                    progressBar.updateProgress((fracCur * 0.5 * 0.5 + biasFile) * 100);
+                    progressBar.updateStatus(`${fileNameComponent} Reading`);
+                }
+                else if (message.msg.type === "Processing") {
+                    const biasFile = message.isNewer ? 0.5 : 0;
+                    const data = message.msg.data;
+                    const fracCur = data.current / data.total;
+                    progressBar.updateProgress(((fracCur * 0.5 + 0.5) * 0.5 + biasFile) * 100);
+                    progressBar.updateStatus(`${fileNameComponent} Processing`);
+                }
+                else if (message.msg.type === "Start") {
+                    progressBar.updateProgress(0);
+                    progressBar.updateStatus(`${fileNameComponent} Start`);
+                }
+                else if (message.msg.type === "Finished") {
+                    progressBar.updateProgress(100);
+                }
+                else {
+                    progressBar.updateStatus(`${fileNameComponent} ${message.msg.type}`);
                 }
             };
             await diff(newerSnapshotFile, olderSnapshotFile, channel);
