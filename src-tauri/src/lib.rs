@@ -1,23 +1,20 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
-use tauri::{Manager, AppHandle};
+mod commands;
+mod error;
 
-#[tauri::command]
-fn get_app_version(app: AppHandle) -> String {
-    let mut v = app.package_info().version.to_string();
-    if !v.starts_with('v') {
-        v.insert(0, 'v');
-    }
-    v
-}
+use crate::commands::{get_app_version, DiffState, diff};
+use std::sync::Mutex;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_app_version])
+        .invoke_handler(tauri::generate_handler![get_app_version, diff])
         .setup(|app| {
+            app.manage(Mutex::new(DiffState::new()));
             let webview_window = app
                 .get_webview_window("main")
                 .ok_or("webview window `main` not found")?;

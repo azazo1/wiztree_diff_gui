@@ -13,6 +13,13 @@
     --confirm-button-hover-bg: #2980b9;
     --confirm-button-disabled-bg: #90c6ea; /* Disabled 背景颜色 */
     --confirm-button-disabled-text: #d9eff6; /* Disabled 文本颜色 */
+    --toast-bg: #ffffff;
+    --toast-text: #333333;
+    --toast-border: #eeeeee;
+    --info-main: #2196F3;
+    --warning-main: #ff9800;
+    --error-main: #f44336;
+    --close-color: #666666;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,6 +38,13 @@
         --confirm-button-hover-bg: #248e53; /* 悬停时背景色 */
         --confirm-button-disabled-bg: #4a6950; /* Disabled 背景颜色 */
         --confirm-button-disabled-text: #5e7e71; /* Disabled 文本颜色 */
+        --toast-bg: #2d2d2d;
+        --toast-text: #ffffff;
+        --toast-border: #404040;
+        --info-main: #64b5f6;
+        --warning-main: #ffb74d;
+        --error-main: #e57373;
+        --close-color: #cccccc;
     }
 }
 
@@ -359,4 +373,79 @@ h1 {
 
 #diff-btn.loading .dot:nth-of-type(3) {
     animation-delay: 1.2s;
+}
+
+.toast {
+    min-width: 10rem;
+    background-color: var(--toast-bg);
+    color: var(--toast-text);
+    border: 1px solid var(--toast-border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    position: fixed;
+    z-index: 999;
+    right: 30px;
+    bottom: 30px;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s, background-color 0.3s;
+    transform: translateY(100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.toast.info {
+    border-left: 4px solid var(--info-main);
+}
+
+.toast.warning {
+    border-left: 4px solid var(--warning-main);
+}
+
+.toast.error {
+    border-left: 4px solid var(--error-main);
+}
+
+.toast.info .toast-icon:before {
+    content: "ℹ️";
+}
+
+.toast.warning .toast-icon:before {
+    content: "⚠️";
+}
+
+.toast.error .toast-icon:before {
+    content: "❌";
+}
+
+.toast-close {
+    color: var(--close-color);
+    font-weight: bold;
+    margin-left: 20px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.toast-close:hover {
+    opacity: 1;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-text {
+    max-width: 50vw;
+    word-wrap: break-word;
+}
+
+.toast .toast-icon {
+    margin-right: 0.5rem;
+}
+
+.toast .toast-icon:before {
+    font-size: 1.5rem;
 }

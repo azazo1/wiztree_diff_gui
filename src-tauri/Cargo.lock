@@ -5340,7 +5340,7 @@ dependencies = [
 [[package]]
 name = "wiztree_diff"
 version = "0.1.0"
-source = "git+https://github.com/azazo1/wiztree_diff.git?rev=8bee86de86f7b96aa6a111c880a0996625adeace#8bee86de86f7b96aa6a111c880a0996625adeace"
+source = "git+https://github.com/azazo1/wiztree_diff.git?rev=6190c7cd0bc4043f8bc8884d27bbae5b6bd066ec#6190c7cd0bc4043f8bc8884d27bbae5b6bd066ec"
 dependencies = [
  "csv",
  "serde",
@@ -5357,6 +5357,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
+ "thiserror 2.0.11",
  "wiztree_diff",
 ]
 

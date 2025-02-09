@@ -42,10 +42,36 @@ type OpenDialogReturn<T extends OpenDialogOptions> = T['directory'] extends true
         ? string[] | null
         : string | null
 
+type Message = {
+    type: "Start",
+    data: number,
+} | {
+    type: "Reading",
+    data: {
+        current: number,
+        delta: number,
+        total: number,
+    }
+} | {
+    type: "ReadDone" | "Sorting" | "SortDone" | "Finished" | "Error",
+} | {
+    type: "Processing",
+    data: {
+        current: number,
+        delta: number,
+        total: number,
+    }
+}
+
 let invoke: (cmd: string, args: object, options?: object) => Promise<any>;
 let getCurrentWebview: () => WebviewWindow;
 let getCurrentWindow: () => Window;
 let dialogOpen: <T extends OpenDialogOptions>(options: OpenDialogOptions) => Promise<OpenDialogReturn<T>>;
+
+type Channel<T> = {};
+// @ts-ignore
+const Channel: Channel = window.__TAURI__.core.Channel;
+
 try {
     // @ts-ignore
     invoke = window.__TAURI__.core.invoke;
@@ -61,6 +87,10 @@ try {
 
 async function getAppVersion(): Promise<string> {
     return await invoke("get_app_version", {});
+}
+
+async function diff(newerFile: string, olderFile: string, channel: Channel<object>): Promise<void> {
+    return await invoke("diff", {channel, newerFile, olderFile});
 }
 
 async function offsetOfClientArea(physicalPosition: { x: number, y: number }): Promise<{ x: number, y: number }> {
@@ -129,6 +159,44 @@ function typingEffect(
     });
 }
 
+/**
+ * 弹窗消失时返回, 返回用户是否点击了关闭按钮.
+ * */
+async function showToast(
+    message: string,
+    type: 'info' | 'warning' | 'error' = 'info',
+    duration = 3000
+) {
+    return new Promise<boolean>((resolve) => {
+        console.log(`toasted ${type}:`)
+        console.log(message);
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        // @ts-ignore
+        toast.resolvePromise = resolve;
+        toast.innerHTML = `
+            <span class="toast-icon"></span>
+            <div class="toast-text">${JSON.stringify(message)}</div>
+            <span class="toast-close" onclick="
+                this.parentElement.classList.remove('show');
+                this.parentElement.resolvePromise(true);
+            ">&times;</span>
+        `;
+
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10); // 为了触发动画, 不能立刻添加
+        setTimeout(() => {
+            if (toast.classList.contains('show')) {
+                toast.classList.remove('show');
+                resolve(false);
+            }
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, duration);
+    });
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
     let newerSnapshotFile: string | undefined = undefined;
     let olderSnapshotFile: string | undefined = undefined;
@@ -148,6 +216,13 @@ window.addEventListener("DOMContentLoaded", async () => {
         olderFileZone.classList.remove("dragover");
     }
 
+    function syncDiffBtnDisabled() {
+        diffBtn.disabled = (
+            newerSnapshotFile === undefined
+            || olderSnapshotFile === undefined
+        );
+    }
+
     function selectFile(isNewer: boolean, path: string | undefined | null) {
         if (path === undefined || path === null || typeof path !== "string") {
             return;
@@ -161,13 +236,10 @@ window.addEventListener("DOMContentLoaded", async () => {
             olderFileZone.classList.add("has-file");
             typingEffect(olderFilePath, "innerText", path);
         }
-        if (newerSnapshotFile !== undefined && olderSnapshotFile !== undefined) {
-            diffBtn.disabled = false;
-        }
+        syncDiffBtnDisabled();
     }
 
     function deselectFile(isNewer: boolean) {
-        diffBtn.disabled = true;
         if (isNewer) {
             // 防止二次点击
             if (newerSnapshotFile !== undefined) {
@@ -184,6 +256,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             olderSnapshotFile = undefined;
         }
+        syncDiffBtnDisabled();
     }
 
     const unlisten_dragdrop = await getCurrentWebview().onDragDropEvent(async (event) => {
@@ -247,6 +320,23 @@ window.addEventListener("DOMContentLoaded", async () => {
     diffBtn.addEventListener("click", async () => {
         diffBtn.classList.add("loading");
         diffBtn.disabled = true;
-        // todo diff 然后恢复按钮状态, 进入 diff 页面
+        try {
+            // todo 进入 diff 页面
+            if (newerSnapshotFile === undefined || olderSnapshotFile === undefined) {
+                // unreachable
+                showToast("input file not ready");
+                return;
+            }
+            let channel = new Channel<Message>("diff");
+            channel.onmessage = (message: Message) => {
+                // todo 更新显示进度条
+            }
+            await diff(newerSnapshotFile, olderSnapshotFile, channel)
+        } catch (e) {
+            showToast(e, 'error', 5000);
+        } finally {
+            diffBtn.classList.remove("loading");
+            syncDiffBtnDisabled();
+        }
     });
 });

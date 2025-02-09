@@ -3,6 +3,8 @@ let invoke;
 let getCurrentWebview;
 let getCurrentWindow;
 let dialogOpen;
+// @ts-ignore
+const Channel = window.__TAURI__.core.Channel;
 try {
     // @ts-ignore
     invoke = window.__TAURI__.core.invoke;
@@ -18,6 +20,9 @@ catch (e) {
 }
 async function getAppVersion() {
     return await invoke("get_app_version", {});
+}
+async function diff(newerFile, olderFile, channel) {
+    return await invoke("diff", { channel, newerFile, olderFile });
 }
 async function offsetOfClientArea(physicalPosition) {
     // 需要考虑 windows 的窗口缩放, 比如 150% 的缩放相应就要缩小为 1.5 分之一
@@ -77,6 +82,38 @@ function typingEffect(element, attribute, targetText, interval = 7) {
         }, interval);
     });
 }
+/**
+ * 弹窗消失时返回, 返回用户是否点击了关闭按钮.
+ * */
+async function showToast(message, type = 'info', duration = 3000) {
+    return new Promise((resolve) => {
+        console.log(`toasted ${type}:`);
+        console.log(message);
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        // @ts-ignore
+        toast.resolvePromise = resolve;
+        toast.innerHTML = `
+            <span class="toast-icon"></span>
+            <div class="toast-text">${JSON.stringify(message)}</div>
+            <span class="toast-close" onclick="
+                this.parentElement.classList.remove('show');
+                this.parentElement.resolvePromise(true);
+            ">&times;</span>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10); // 为了触发动画, 不能立刻添加
+        setTimeout(() => {
+            if (toast.classList.contains('show')) {
+                toast.classList.remove('show');
+                resolve(false);
+            }
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, duration);
+    });
+}
 window.addEventListener("DOMContentLoaded", async () => {
     let newerSnapshotFile = undefined;
     let olderSnapshotFile = undefined;
@@ -94,6 +131,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         newerFileZone.classList.remove("dragover");
         olderFileZone.classList.remove("dragover");
     }
+    function syncDiffBtnDisabled() {
+        diffBtn.disabled = (newerSnapshotFile === undefined
+            || olderSnapshotFile === undefined);
+    }
     function selectFile(isNewer, path) {
         if (path === undefined || path === null || typeof path !== "string") {
             return;
@@ -108,12 +149,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             olderFileZone.classList.add("has-file");
             typingEffect(olderFilePath, "innerText", path);
         }
-        if (newerSnapshotFile !== undefined && olderSnapshotFile !== undefined) {
-            diffBtn.disabled = false;
-        }
+        syncDiffBtnDisabled();
     }
     function deselectFile(isNewer) {
-        diffBtn.disabled = true;
         if (isNewer) {
             // 防止二次点击
             if (newerSnapshotFile !== undefined) {
@@ -131,6 +169,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             olderSnapshotFile = undefined;
         }
+        syncDiffBtnDisabled();
     }
     const unlisten_dragdrop = await getCurrentWebview().onDragDropEvent(async (event) => {
         if (event.payload.type === "over") {
@@ -191,6 +230,25 @@ window.addEventListener("DOMContentLoaded", async () => {
     diffBtn.addEventListener("click", async () => {
         diffBtn.classList.add("loading");
         diffBtn.disabled = true;
-        // todo diff 然后恢复按钮状态, 进入 diff 页面
+        try {
+            // todo 进入 diff 页面
+            if (newerSnapshotFile === undefined || olderSnapshotFile === undefined) {
+                // unreachable
+                showToast("input file not ready");
+                return;
+            }
+            let channel = new Channel("diff");
+            channel.onmessage = (message) => {
+                // todo 更新显示进度条
+            };
+            await diff(newerSnapshotFile, olderSnapshotFile, channel);
+        }
+        catch (e) {
+            showToast(e, 'error', 5000);
+        }
+        finally {
+            diffBtn.classList.remove("loading");
+            syncDiffBtnDisabled();
+        }
     });
 });
