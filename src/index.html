@@ -6,8 +6,10 @@
     <title>WizTree Diff</title>
     <link rel="stylesheet" href="styles.css"/>
     <link rel="stylesheet" href="toast.css"/>
+    <link rel="stylesheet" href="progressbar.css"/>
     <script src="main.js" type="text/javascript"></script>
     <script src="toast.js" type="text/javascript"></script>
+    <script src="progressbar.js" type="text/javascript"></script>
 </head>
 <body>
 <div class="container">
@@ -21,7 +23,9 @@
             <li>⚡ Click the "Diff" button to analyze changes</li>
         </ol>
     </div>
-    <!--todo diff 加载进度条-->
+
+    <div class="progress-bar" id="diff-progress"></div>
+
     <div class="control-panel">
         <div class="drop-zone" id="newer-file-zone">
             <!--class 和 id 不能放在 label 上, label 不支持 dragover 和 drop 事件-->

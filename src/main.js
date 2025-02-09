@@ -95,6 +95,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const olderFileInput = document.getElementById("older-file-input");
     const diffBtn = document.getElementById("diff-btn");
     const versionText = document.getElementById("version-text");
+    const progressBar = new Progressbar('diff-progress');
     function clearDragover() {
         newerFileZone.classList.remove("dragover");
         olderFileZone.classList.remove("dragover");
@@ -102,6 +103,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     function syncDiffBtnDisabled() {
         diffBtn.disabled = (newerSnapshotFile === undefined
             || olderSnapshotFile === undefined);
+    }
+    function vacantProgressBar() {
+        progressBar.updateProgress(0);
+        progressBar.updateStatus("No tasks");
     }
     function selectFile(isNewer, path) {
         if (path === undefined || path === null || typeof path !== "string") {
@@ -139,7 +144,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
         syncDiffBtnDisabled();
     }
-    const unlisten_dragdrop = await getCurrentWebview().onDragDropEvent(async (event) => {
+    const unlistenDragDrop = await getCurrentWebview().onDragDropEvent(async (event) => {
         if (event.payload.type === "over") {
             const zone = await zoneFromPosition(event.payload.position);
             clearDragover();
@@ -206,7 +211,11 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             let channel = new Channel("diff");
             channel.onmessage = (message) => {
-                // todo 更新显示进度条
+                // todo 进度条适配, 不要跳来跳去
+                if (message.msg.type === "Reading" || message.msg.type === "Processing") {
+                    progressBar.updateProgress(message.msg.data.current / message.msg.data.total * 100);
+                    progressBar.updateStatus(message.msg.type);
+                }
             };
             await diff(newerSnapshotFile, olderSnapshotFile, channel);
             // todo 进入 diff 页面
@@ -219,4 +228,5 @@ window.addEventListener("DOMContentLoaded", async () => {
             syncDiffBtnDisabled();
         }
     });
+    vacantProgressBar();
 });

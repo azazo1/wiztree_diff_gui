@@ -63,6 +63,12 @@ type Message = {
     }
 }
 
+type LoadingMsg = {
+    file: string,
+    isNewer: boolean,
+    msg: Message
+}
+
 let invoke: (cmd: string, args: object, options?: object) => Promise<any>;
 let getCurrentWebview: () => WebviewWindow;
 let getCurrentWindow: () => Window;
@@ -172,6 +178,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const olderFileInput = document.getElementById("older-file-input");
     const diffBtn = document.getElementById("diff-btn") as HTMLButtonElement;
     const versionText = document.getElementById("version-text");
+    const progressBar = new Progressbar('diff-progress');
 
     function clearDragover() {
         newerFileZone.classList.remove("dragover");
@@ -183,6 +190,11 @@ window.addEventListener("DOMContentLoaded", async () => {
             newerSnapshotFile === undefined
             || olderSnapshotFile === undefined
         );
+    }
+
+    function vacantProgressBar() {
+        progressBar.updateProgress(0);
+        progressBar.updateStatus("No tasks");
     }
 
     function selectFile(isNewer: boolean, path: string | undefined | null) {
@@ -221,7 +233,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         syncDiffBtnDisabled();
     }
 
-    const unlisten_dragdrop = await getCurrentWebview().onDragDropEvent(async (event) => {
+    const unlistenDragDrop = await getCurrentWebview().onDragDropEvent(async (event) => {
         if (event.payload.type === "over") {
             const zone = await zoneFromPosition(event.payload.position);
             clearDragover();
@@ -288,9 +300,13 @@ window.addEventListener("DOMContentLoaded", async () => {
                 showToast("input file not ready");
                 return;
             }
-            let channel = new Channel<Message>("diff");
-            channel.onmessage = (message: Message) => {
-                // todo 更新显示进度条
+            let channel = new Channel<LoadingMsg>("diff");
+            channel.onmessage = (message: LoadingMsg) => {
+                // todo 进度条适配, 不要跳来跳去
+                if (message.msg.type === "Reading" || message.msg.type === "Processing") {
+                    progressBar.updateProgress(message.msg.data.current / message.msg.data.total * 100);
+                    progressBar.updateStatus(message.msg.type);
+                }
             }
             await diff(newerSnapshotFile, olderSnapshotFile, channel)
             // todo 进入 diff 页面
@@ -301,4 +317,6 @@ window.addEventListener("DOMContentLoaded", async () => {
             syncDiffBtnDisabled();
         }
     });
+
+    vacantProgressBar();
 });

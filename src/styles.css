@@ -3,6 +3,7 @@
     --accent-color: #3498db;
     --hover-color: #2980b9;
     --background-color: #f8f9fa;
+    --container-bg: #e9ecef;
     --text-color: #2c3e50;
     --secondary-text: #7f8c8d;
     --dropzone-bg: #ffffff;
@@ -28,6 +29,7 @@
         --accent-color: #1abc9c;
         --hover-color: #16a085;
         --background-color: #1a1a1a;
+        --container-bg: #2d2d2d;
         --text-color: #ecf0f1;
         --secondary-text: #bdc3c7;
         --dropzone-bg: #2d2d2d;
@@ -63,6 +65,11 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.2rem;
 }
 
 h1 {
@@ -74,7 +81,7 @@ h1 {
 .description {
     color: var(--secondary-text);
     font-size: 1.2rem;
-    margin-bottom: 3rem;
+    margin-bottom: 1rem;
     line-height: 1.6;
 }
 
@@ -85,10 +92,11 @@ h1 {
 }
 
 .control-panel {
+    width: 100%;
     display: flex;
     gap: 2rem;
     justify-content: center;
-    margin-bottom: 3rem;
+    margin-bottom: 1rem;
 }
 
 .drop-zone {
@@ -205,7 +213,7 @@ h1 {
     text-align: center;
     color: var(--secondary-text);
     font-size: 0.9rem;
-    margin-top: 3rem;
+    margin-top: 1rem;
     padding: 1rem;
 }
 
@@ -216,7 +224,7 @@ h1 {
 
 .steps-container {
     max-width: 800px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 0.3rem;
     padding: 1.5rem;
     background: var(--dropzone-bg);
     border-radius: 15px;

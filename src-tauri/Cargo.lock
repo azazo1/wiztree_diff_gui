@@ -5340,7 +5340,7 @@ dependencies = [
 [[package]]
 name = "wiztree_diff"
 version = "0.1.0"
-source = "git+https://github.com/azazo1/wiztree_diff.git?rev=6190c7cd0bc4043f8bc8884d27bbae5b6bd066ec#6190c7cd0bc4043f8bc8884d27bbae5b6bd066ec"
+source = "git+https://github.com/azazo1/wiztree_diff.git?rev=38cfa5bddd6fa969434a0e49cebf31cd12763a9a#38cfa5bddd6fa969434a0e49cebf31cd12763a9a"
 dependencies = [
  "csv",
  "serde",
