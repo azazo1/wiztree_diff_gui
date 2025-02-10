@@ -112,6 +112,10 @@ pub async fn create_diff_window(app: AppHandle) -> Result<(), Error> {
         eprintln!("Error setting size: {:?}", e);
     });
     win.show()?;
+    #[cfg(debug_assertions)]
+    {
+        win.open_devtools();
+    }
     Ok(())
 }
 
