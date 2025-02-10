@@ -38,7 +38,7 @@ body {
 .table-container {
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    overflow: auto;
+    overflow: visible;
     width: 100%;
     height: 100%;
 }
@@ -125,6 +125,7 @@ td:first-of-type { /* 存放 Path 的 td */
 
 .path .diff-node-expand-toggle {
     cursor: pointer;
+    user-select: none;
     position: absolute;
     left: -0.3rem;
     top: 50%;

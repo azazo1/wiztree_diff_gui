@@ -269,7 +269,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             let channel = new Channel<LoadingMsg>("diff");
             channel.onmessage = (message: LoadingMsg) => {
-                let fileNameComponent = getFileNameComponent(message.file);
+                let fileNameComponent = getNameComponent(message.file);
                 if (message.msg.type === "Reading") {
                     const biasFile = message.isNewer ? 0.5 : 0;
                     const data = message.msg.data;

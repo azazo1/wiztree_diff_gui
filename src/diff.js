@@ -1,83 +1,6 @@
-const sampleData = {
-    kind: 'Changed',
-    folder: true,
-    path: '/projects',
-    deltaSize: 2048,
-    deltaAlloc: 1024,
-    deltaNFiles: 3,
-    deltaNFolders: 1,
-    expanded: true,
-    children: [
-        {
-            kind: 'New',
-            folder: false,
-            path: '/projects/new_file.txt',
-            deltaSize: 512,
-            deltaAlloc: 512,
-            deltaNFiles: 1,
-            deltaNFolders: 0,
-            expanded: false,
-            children: []
-        },
-        {
-            kind: 'Removed',
-            folder: true,
-            path: '/projects/old_dir',
-            deltaSize: -1024,
-            deltaAlloc: -512,
-            deltaNFiles: -2,
-            deltaNFolders: -1,
-            expanded: false,
-            children: [
-                {
-                    kind: 'Changed',
-                    folder: false,
-                    path: '/projects/old_dir/file.md',
-                    deltaSize: 256,
-                    deltaAlloc: 0,
-                    deltaNFiles: 0,
-                    deltaNFolders: 0,
-                    expanded: false,
-                    children: []
-                }
-            ]
-        },
-        {
-            kind: 'New',
-            folder: false,
-            path: '/projects/new_file.txt',
-            deltaSize: 512,
-            deltaAlloc: 512,
-            deltaNFiles: 1,
-            deltaNFolders: 0,
-            expanded: false,
-            children: []
-        },
-        {
-            kind: 'Removed',
-            folder: true,
-            path: '/projects/old_dir',
-            deltaSize: -1024,
-            deltaAlloc: -512,
-            deltaNFiles: -2,
-            deltaNFolders: -1,
-            expanded: false,
-            children: [
-                {
-                    kind: 'Changed',
-                    folder: false,
-                    path: '/projects/old_dir/file.md',
-                    deltaSize: 256,
-                    deltaAlloc: 0,
-                    deltaNFiles: 0,
-                    deltaNFolders: 0,
-                    expanded: false,
-                    children: []
-                }
-            ]
-        }
-    ]
-};
+// @ts-ignore
+const { invoke } = window.__TAURI__.core;
+let data = null;
 class DiffTableRenderer {
     tableEl;
     tableBodyEl;
@@ -91,16 +14,41 @@ class DiffTableRenderer {
     init() {
         this.setupResizableColumns();
         this.setupSorting();
-        this.render(sampleData);
+        this.renderData().then();
     }
-    render(nodeData, depth = 0, parentKey = 'root') {
+    initNode(node) {
+        node.expanded = false;
+        node.children = null;
+        node.name = getNameComponent(node.path);
+    }
+    async fetchRootNodes() {
+        const nodes = await invoke("get_diff_root_nodes", {});
+        nodes.forEach(this.initNode);
+        data = nodes;
+    }
+    async fetchNodes(node) {
+        const nodes = await invoke("get_diff_nodes", { path: node.path });
+        nodes.forEach(this.initNode);
+        node.children = nodes;
+    }
+    async renderData() {
+        if (data === null) {
+            await this.fetchRootNodes();
+        }
+        for (const node of data) {
+            await this.renderNode(node);
+        }
+    }
+    async renderNode(nodeData, depth = 0, parentKey = 'root') {
+        if (nodeData.children === null) {
+            await this.fetchNodes(nodeData);
+        }
         const row = this.createRow(nodeData, depth, parentKey);
         this.tableBodyEl.appendChild(row);
-        if (nodeData.children.length > 0 && nodeData.expanded) {
-            nodeData.children.forEach(child => {
-                // todo 实现后端数据的获取和缓存
-                this.render(child, depth + 1, parentKey + '-' + nodeData.path);
-            });
+        if (nodeData.children && nodeData.expanded) {
+            for (const child of nodeData.children) {
+                await this.renderNode(child, depth + 1, parentKey + '/' + nodeData.name);
+            }
         }
     }
     createRow(nodeData, depth, parentKey) {
@@ -111,10 +59,10 @@ class DiffTableRenderer {
         this.inflatePathCell(pathCell, nodeData, depth);
         row.appendChild(pathCell);
         row.appendChild(this.createCell(nodeData.kind));
-        row.appendChild(this.createDeltaCell(nodeData.deltaSize));
-        row.appendChild(this.createDeltaCell(nodeData.deltaAlloc));
-        row.appendChild(this.createDeltaCell(nodeData.deltaNFiles));
-        row.appendChild(this.createDeltaCell(nodeData.deltaNFolders));
+        row.appendChild(this.createDeltaCell(nodeData.delta_size, true));
+        row.appendChild(this.createDeltaCell(nodeData.delta_alloc, true));
+        row.appendChild(this.createDeltaCell(nodeData.delta_n_files));
+        row.appendChild(this.createDeltaCell(nodeData.delta_n_folders));
         if (nodeData.folder) {
             row.classList.add('folder');
             row.querySelector('.diff-node-expand-toggle')
@@ -127,15 +75,21 @@ class DiffTableRenderer {
     }
     createCell(text) {
         const cell = document.createElement('td');
-        console.log(text.toLowerCase());
         cell.classList.add(text.toLowerCase()); // in diff.css: .new, .removed, .changed
         cell.textContent = text;
         return cell;
     }
-    createDeltaCell(deltaValue) {
+    createDeltaCell(deltaValue, toBytesString = false) {
         const cell = document.createElement('td');
-        cell.className = deltaValue >= 0 ? 'delta-positive' : 'delta-negative';
-        cell.textContent = `${deltaValue}`;
+        if (deltaValue !== 0) {
+            cell.className = deltaValue > 0 ? 'delta-positive' : 'delta-negative';
+        }
+        if (toBytesString) {
+            cell.textContent = bytesToString(deltaValue, true);
+        }
+        else {
+            cell.textContent = `${deltaValue}`;
+        }
         return cell;
     }
     inflatePathCell(cell, node, depth) {
@@ -148,7 +102,7 @@ class DiffTableRenderer {
         const icon = document.createElement("span");
         icon.classList.add(node.folder ? "diff-node-icon-folder" : "diff-node-icon-file");
         const name = document.createElement("span");
-        name.textContent = getFileNameComponent(node.path);
+        name.textContent = getNameComponent(node.path);
         cell.appendChild(indent);
         const innerCell = document.createElement("span");
         innerCell.classList.add("path");
@@ -165,10 +119,9 @@ class DiffTableRenderer {
     toggleFolder(node) {
         node.expanded = !node.expanded;
         this.tableBodyEl.innerHTML = '';
-        this.render(sampleData);
+        this.renderData();
     }
     setupResizableColumns() {
-        // todo 修复拖动开始时的位移
         const cols = this.tableEl.querySelectorAll('th');
         cols.forEach((header) => {
             const handle = document.createElement('div');
@@ -228,15 +181,15 @@ class DiffTableRenderer {
                 else {
                     orderIcon.textContent = "▼";
                 }
-                this.sortState = { field, order };
-                this.sortNodes();
+                this.sortNodes(field, order);
             };
             // @ts-ignore
             header.clickListener = listener;
             header.addEventListener('click', listener);
         });
     }
-    sortNodes() {
+    sortNodes(field, order) {
+        this.sortState = { field, order };
         // 排序逻辑需要根据当前层级处理兄弟节点
         // 此处为简化实现，示例数据需要调整结构支持排序
         console.log('Sorting by:', this.sortState);

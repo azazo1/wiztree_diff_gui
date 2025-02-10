@@ -10,11 +10,12 @@ type DiffNode = {
     delta_n_files: number,
     delta_n_folders: number,
 
-    children: DiffNode[],
-    expanded: boolean
+    children: DiffNode[] | null, // 节点 init 后为 null, fetchNodes 之后为 DiffNode[] (可能为空数组)
+    name: string, // 文件夹/文件/磁盘 名
+    expanded: boolean,
 }
 
-let data: DiffNode[] = [];
+let data: DiffNode[] | null = null;
 
 class DiffTableRenderer {
     private tableEl: HTMLTableElement;
@@ -34,23 +35,47 @@ class DiffTableRenderer {
     private init() {
         this.setupResizableColumns();
         this.setupSorting();
-        this.renderData();
+        this.renderData().then();
     }
 
-    renderData() {
+    private initNode(node: DiffNode) {
+        node.expanded = false;
+        node.children = null;
+        node.name = getNameComponent(node.path);
+    }
+
+    private async fetchRootNodes(): Promise<void> {
+        const nodes: DiffNode[] = await invoke("get_diff_root_nodes", {});
+        nodes.forEach(this.initNode);
+        data = nodes;
+    }
+
+    private async fetchNodes(node: DiffNode): Promise<void> {
+        const nodes: DiffNode[] = await invoke("get_diff_nodes", {path: node.path});
+        nodes.forEach(this.initNode);
+        node.children = nodes;
+    }
+
+    async renderData() {
+        if (data === null) {
+            await this.fetchRootNodes();
+        }
         for (const node of data) {
-            this.renderNode(node);
+            await this.renderNode(node);
         }
     }
 
-    private renderNode(nodeData: DiffNode, depth = 0, parentKey = 'root') {
+    private async renderNode(nodeData: DiffNode, depth = 0, parentKey = 'root') {
+        if (nodeData.children === null) {
+            await this.fetchNodes(nodeData);
+        }
+
         const row = this.createRow(nodeData, depth, parentKey);
         this.tableBodyEl.appendChild(row);
-
-        if (nodeData.children.length > 0 && nodeData.expanded) {
-            nodeData.children.forEach(child => {
-                this.renderNode(child, depth + 1, parentKey + '-' + nodeData.path);
-            });
+        if (nodeData.children && nodeData.expanded) {
+            for (const child of nodeData.children) {
+                await this.renderNode(child, depth + 1, parentKey + '/' + nodeData.name);
+            }
         }
     }
 
@@ -64,8 +89,8 @@ class DiffTableRenderer {
         row.appendChild(pathCell);
 
         row.appendChild(this.createCell(nodeData.kind));
-        row.appendChild(this.createDeltaCell(nodeData.delta_size));
-        row.appendChild(this.createDeltaCell(nodeData.delta_alloc));
+        row.appendChild(this.createDeltaCell(nodeData.delta_size, true));
+        row.appendChild(this.createDeltaCell(nodeData.delta_alloc, true));
         row.appendChild(this.createDeltaCell(nodeData.delta_n_files));
         row.appendChild(this.createDeltaCell(nodeData.delta_n_folders));
 
@@ -82,16 +107,21 @@ class DiffTableRenderer {
 
     private createCell(text: string) {
         const cell = document.createElement('td');
-        console.log(text.toLowerCase());
         cell.classList.add(text.toLowerCase()); // in diff.css: .new, .removed, .changed
         cell.textContent = text;
         return cell;
     }
 
-    private createDeltaCell(deltaValue: number) {
+    private createDeltaCell(deltaValue: number, toBytesString: boolean = false) {
         const cell = document.createElement('td');
-        cell.className = deltaValue >= 0 ? 'delta-positive' : 'delta-negative';
-        cell.textContent = `${deltaValue}`;
+        if (deltaValue !== 0) {
+            cell.className = deltaValue > 0 ? 'delta-positive' : 'delta-negative';
+        }
+        if (toBytesString) {
+            cell.textContent = bytesToString(deltaValue, true);
+        } else {
+            cell.textContent = `${deltaValue}`;
+        }
         return cell;
     }
 
@@ -103,9 +133,9 @@ class DiffTableRenderer {
         indent.style.width = indentWidth;
         indent.style.minWidth = indentWidth;
         const icon = document.createElement("span");
-        icon.classList.add(node.folder? "diff-node-icon-folder":"diff-node-icon-file");
+        icon.classList.add(node.folder ? "diff-node-icon-folder" : "diff-node-icon-file");
         const name = document.createElement("span");
-        name.textContent = getFileNameComponent(node.path);
+        name.textContent = getNameComponent(node.path);
         cell.appendChild(indent);
         const innerCell = document.createElement("span");
         innerCell.classList.add("path");
@@ -123,7 +153,6 @@ class DiffTableRenderer {
     toggleFolder(node: DiffNode) {
         node.expanded = !node.expanded;
         this.tableBodyEl.innerHTML = '';
-        // todo 如果展开时没有缓存子节点, 则需要请求后端数据
         this.renderData();
     }
 
