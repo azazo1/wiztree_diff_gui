@@ -130,7 +130,7 @@ tr:hover {
     transform: translate(-100%, -50%);
 }
 
-.path .diff-node-icon-file, .path .diff-node-icon-folder {
+.path .diff-node-icon-file, .path .diff-node-icon-folder, .path .diff-node-icon-file-group {
     margin-right: 6px;
     height: 1.5rem;
     width: 1.5rem;
@@ -145,6 +145,11 @@ tr:hover {
 .diff-node-icon-folder {
     mask: url("assets/folder.svg") no-repeat center / contain;
     background-color: var(--folder-icon-color);
+}
+
+.diff-node-icon-file-group {
+    mask: url("assets/file-group.svg") no-repeat center / contain;
+    background-color: var(--file-icon-color);
 }
 
 .removed {

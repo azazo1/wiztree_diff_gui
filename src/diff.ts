@@ -4,7 +4,7 @@ const {invoke} = window.__TAURI__.core;
 //   - 提供路径复制功能
 type DiffNode = {
     path: string,
-    kind: 'New' | 'Removed' | 'Changed' | string,
+    kind: 'New' | 'Removed' | 'Changed' | 'FileGroup' | string,
     folder: boolean,
     delta_size: number,
     delta_alloc: number,
@@ -47,15 +47,72 @@ class DiffTableRenderer {
         node.name = getNameComponent(node.path);
     }
 
+    /**
+     * nodes 中不能有 kind === "FileGroup" 的节点, 否则会自动丢弃 FileGroup 节点.
+     */
+    private groupFileNodes(nodes: DiffNode[]) {
+        const newFiles: DiffNode[] = [];
+        const removedFiles: DiffNode[] = [];
+        const changedFiles: DiffNode[] = [];
+        const folders: DiffNode[] = [];
+
+        let delta_size = 0;
+        let delta_alloc = 0;
+        let sampleFile: DiffNode = null;
+        for (const node of nodes) {
+            if (!node.folder) {
+                if (sampleFile === null) {
+                    sampleFile = node;
+                }
+                delta_size += node.delta_size;
+                delta_alloc += node.delta_alloc;
+                if (node.kind === 'New') {
+                    newFiles.push(node);
+                } else if (node.kind === "Removed") {
+                    removedFiles.push(node);
+                } else if (node.kind === "Changed") {
+                    changedFiles.push(node);
+                }
+            } else {
+                folders.push(node);
+            }
+        }
+        nodes.length = 0;
+        nodes.push(...folders);
+        let totalLen = newFiles.length + removedFiles.length + changedFiles.length;
+        if (totalLen === 0) {
+            return;
+        }
+        const dummyFileGroupNode: DiffNode = {
+            kind: "FileGroup",
+            delta_n_files: newFiles.length - removedFiles.length,
+            delta_n_folders: 0,
+            delta_size,
+            delta_alloc,
+            folder: false,
+            path: sampleFile.path + "... [File Group]",
+            name: `[${totalLen} file diff nodes]`,
+            children: [
+                ...newFiles,
+                ...removedFiles,
+                ...changedFiles
+            ],
+            expanded: false
+        }
+        nodes.push(dummyFileGroupNode);
+    }
+
     private async fetchRootNodes(): Promise<void> {
         const nodes: DiffNode[] = await invoke("get_diff_root_nodes", {});
         nodes.forEach(this.initNode);
+        this.groupFileNodes(nodes);
         data = nodes;
     }
 
     private async fetchNodes(node: DiffNode): Promise<void> {
         const nodes: DiffNode[] = await invoke("get_diff_nodes", {path: node.path});
         nodes.forEach(this.initNode);
+        this.groupFileNodes(nodes)
         node.children = nodes;
     }
 
@@ -98,15 +155,6 @@ class DiffTableRenderer {
         row.appendChild(this.createDeltaCell(nodeData.delta_alloc, true));
         row.appendChild(this.createDeltaCell(nodeData.delta_n_files));
         row.appendChild(this.createDeltaCell(nodeData.delta_n_folders));
-
-        if (nodeData.folder) {
-            row.classList.add('folder');
-            row.querySelector('.diff-node-expand-toggle')
-                .addEventListener('click', () => this.toggleFolder(nodeData));
-        } else {
-            row.classList.add('file');
-        }
-
         return row;
     }
 
@@ -141,16 +189,24 @@ class DiffTableRenderer {
         indent.style.width = indentWidth;
         indent.style.minWidth = indentWidth;
         const icon = document.createElement("span");
-        icon.classList.add(node.folder ? "diff-node-icon-folder" : "diff-node-icon-file");
+        let isFileGroup = node.kind === "FileGroup";
+        if (!isFileGroup) {
+            icon.classList.add(node.folder ? "diff-node-icon-folder" : "diff-node-icon-file");
+        } else {
+            icon.classList.add("diff-node-icon-file-group");
+        }
         const name = document.createElement("span");
-        name.textContent = getNameComponent(node.path);
+        name.textContent = node.name;
         cell.appendChild(indent);
         const innerCell = document.createElement("span");
         innerCell.classList.add("path");
-        if (node.folder) {
+        if (node.folder || isFileGroup) {
             const toggle = document.createElement("span");
             toggle.classList.add("diff-node-expand-toggle");
             toggle.textContent = node.expanded ? '▼' : '▶';
+            toggle.addEventListener('click', () => {
+                this.toggleExpand(node)
+            });
             innerCell.appendChild(toggle);
         }
         innerCell.appendChild(icon);
@@ -158,7 +214,7 @@ class DiffTableRenderer {
         cell.appendChild(innerCell);
     }
 
-    toggleFolder(node: DiffNode) {
+    toggleExpand(node: DiffNode) {
         node.expanded = !node.expanded;
         this.renderData().then();
     }
@@ -236,8 +292,9 @@ class DiffTableRenderer {
             header.clickListener = listener;
             header.addEventListener('click', listener);
 
-            // 初始时安装 预先设置的 field 进行排序
+            // 初始时安装 预先设置的 field 和顺序进行排序
             if (header.dataset.sort === this.sortState.field) {
+                this.sortState.asc = !this.sortState.asc; // 提前置反一次
                 listener();
             }
         });
@@ -262,7 +319,6 @@ class DiffTableRenderer {
             let rst = NaN;
             if (this.sortState.field === "path") {
                 // 如果使用 path 排序, 则文件夹优先
-                // todo: 把所有兄弟文件节点整合成一个假节点
                 if (a.folder && !b.folder) {
                     rst = -1;
                 } else if (!a.folder && b.folder) {
