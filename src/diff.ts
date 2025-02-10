@@ -198,32 +198,43 @@ class DiffTableRenderer {
     }
 
     setupResizableColumns() {
-        // todo 修复拖动开始是的位移
-        // todo 设置最小宽度
+        // todo 修复拖动开始时的位移
         const cols = this.tableEl.querySelectorAll('th');
-        cols.forEach((col) => {
+        cols.forEach((header) => {
             const handle = document.createElement('div');
             handle.className = 'resize-handle';
-            col.appendChild(handle);
+            header.appendChild(handle);
 
             let startX = 0;
             let startWidth = 0;
 
-            handle.addEventListener('mousedown', (e) => {
+            handle.addEventListener('mousedown', (e: MouseEvent) => {
+                e.stopPropagation();
                 startX = e.clientX;
-                startWidth = col.offsetWidth;
+                startWidth = header.offsetWidth;
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
+                // @ts-ignore 临时禁用点击事件, 防止意外触发排序
+                header.removeEventListener('click', header.clickListener);
             });
 
-            const onMouseMove = (e) => {
-                const newWidth = startWidth + (e.clientX - startX);
-                col.style.width = newWidth + 'px';
+            const onMouseMove = (e: MouseEvent) => {
+                e.stopPropagation();
+                let newWidth = startWidth + (e.clientX - startX);
+                if (newWidth < 0) {
+                    newWidth = 0;
+                }
+                header.style.width = newWidth + 'px';
             };
 
-            const onMouseUp = () => {
+            const onMouseUp = (e: MouseEvent) => {
+                e.stopPropagation();
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
+                setTimeout(() => {
+                    // @ts-ignore 太早恢复还是会意外触发点击
+                    header.addEventListener('click', header.clickListener);
+                }, 100);
             };
         });
     }
@@ -231,6 +242,7 @@ class DiffTableRenderer {
     setupSorting() {
         this.tableEl.querySelectorAll('th.sortable').forEach((header: HTMLTableSectionElement) => {
             header.addEventListener('click', () => {
+            const listener = (_: MouseEvent) => {
                 const field = header.dataset.sort;
                 const order = this.sortState.field === field
                     ? (this.sortState.order === 'asc' ? 'desc' : 'asc')
@@ -243,7 +255,10 @@ class DiffTableRenderer {
                 header.classList.add(`sort-${order}`);
                 this.sortState = {field, order};
                 this.sortNodes();
-            });
+            };
+            // @ts-ignore
+            header.clickListener = listener;
+            header.addEventListener('click', listener);
         });
     }
 
