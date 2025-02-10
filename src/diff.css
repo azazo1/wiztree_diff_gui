@@ -1,0 +1,149 @@
+:root {
+    --bg-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #dddddd;
+    --hover-bg: #f5f5f5;
+    --icon-color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #1e1e1e;
+        --text-color: #e0e0e0;
+        --border-color: #444444;
+        --hover-bg: #2d2d2d;
+        --icon-color: #888;
+    }
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 20px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.table-container {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+th {
+    padding: 0.8rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+th.sortable::after {
+    content: '';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 4px solid transparent;
+    opacity: 0.6;
+}
+
+td {
+    padding: 0.8rem 1rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 2px solid var(--border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+td:first-of-type {
+    text-align: left;
+}
+
+td:nth-of-type(2) {
+    text-align: center;
+}
+
+th.sort-asc::after {
+    border-bottom-color: var(--text-color);
+}
+
+th.sort-desc::after {
+    border-top-color: var(--text-color);
+}
+
+.resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    background: color-mix(in srgb, var(--text-color) 70%, transparent);
+}
+
+tr:hover {
+    background-color: var(--hover-bg);
+}
+
+.indent {
+    display: inline-block;
+}
+
+.delta-positive {
+    color: #2ecc71;
+}
+
+.delta-negative {
+    color: #e74c3c;
+}
+
+td:first-of-type { /* 存放 Path 的 td */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.path {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+}
+
+.path .diff-node-expand-toggle {
+    cursor: pointer;
+    position: absolute;
+    left: -0.3rem;
+    top: 50%;
+    transform: translate(-100%, -50%);
+}
+
+.path .diff-node-icon {
+    margin-right: 6px;
+    height: 1.5rem;
+    display: inline-block;
+}
+
+.removed {
+    color: var(#f43737);
+}
+
+.new {
+    color: var(#2ecc71);
+}
+
+.changed {
+    color: var(#46bfff);
+}

@@ -94,11 +94,6 @@ async function zoneFromPosition(physicalPos: { x: number, y: number }): Promise<
     return null;
 }
 
-function getFileNameComponent(path: string): string {
-    const parts = path.replaceAll("\\", "/").split("/").filter(Boolean);
-    return parts[parts.length - 1];
-}
-
 function typingEffect(
     element: HTMLElement,
     attribute: string,
