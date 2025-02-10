@@ -8,7 +8,7 @@ class DiffTableRenderer {
     constructor(tableEl) {
         this.tableEl = tableEl;
         this.tableBodyEl = this.tableEl.querySelector(".diff-body");
-        this.sortState = { field: "size", order: "asc" };
+        this.sortState = { field: "size", asc: false };
         this.init();
     }
     init() {
@@ -119,7 +119,7 @@ class DiffTableRenderer {
     toggleFolder(node) {
         node.expanded = !node.expanded;
         this.tableBodyEl.innerHTML = '';
-        this.renderData();
+        this.renderData().then();
     }
     setupResizableColumns() {
         const cols = this.tableEl.querySelectorAll('th');
@@ -165,31 +165,33 @@ class DiffTableRenderer {
             header.appendChild(orderIcon);
             const listener = (_) => {
                 const field = header.dataset.sort;
-                const order = this.sortState.field === field
-                    ? (this.sortState.order === 'asc' ? 'desc' : 'asc')
-                    : 'asc';
+                const asc = this.sortState.field === field
+                    ? !this.sortState.asc
+                    : true;
                 this.tableEl.querySelectorAll('th.sortable').forEach((h) => {
                     if (h.classList.contains('sort-asc') || h.classList.contains('sort-desc')) {
                         h.classList.remove('sort-asc', 'sort-desc');
                         h.querySelector('span.sort-order-icon').textContent = '';
                     }
                 });
-                header.classList.add(`sort-${order}`);
-                if (order === 'asc') {
+                header.classList.add(`sort-${asc ? 'asc' : 'desc'}`);
+                if (asc) {
                     orderIcon.textContent = "▲";
                 }
                 else {
                     orderIcon.textContent = "▼";
                 }
-                this.sortNodes(field, order);
+                this.sortNodes({ field, asc });
             };
             // @ts-ignore
             header.clickListener = listener;
             header.addEventListener('click', listener);
         });
     }
-    sortNodes(field, order) {
-        this.sortState = { field, order };
+    sortNodes(newState) {
+        if (newState !== undefined) {
+            this.sortState = newState;
+        }
         // 排序逻辑需要根据当前层级处理兄弟节点
         // 此处为简化实现，示例数据需要调整结构支持排序
         console.log('Sorting by:', this.sortState);
