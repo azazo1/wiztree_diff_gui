@@ -6,6 +6,8 @@ pub enum Error {
     Diff(#[from] wiztree_diff::Error),
     #[error("Failed to lock Mutex: {0}")]
     Lock(String),
+    #[error(transparent)]
+    Tauri(#[from] tauri::Error),
 }
 
 #[derive(Serialize)]
@@ -13,6 +15,7 @@ pub enum Error {
 pub enum ErrorKind {
     Diff(String),
     Lock(String),
+    Tauri(String),
 }
 
 impl Error {
@@ -21,6 +24,7 @@ impl Error {
         match &self {
             Error::Diff(_) => ErrorKind::Diff(e_string),
             Error::Lock(_) => ErrorKind::Lock(e_string),
+            Error::Tauri(_) => ErrorKind::Tauri(e_string),
         }
     }
 }

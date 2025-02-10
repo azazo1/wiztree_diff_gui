@@ -13,6 +13,12 @@ async function getAppVersion() {
 async function diff(newerFile, olderFile, channel) {
     return await invoke("diff", { channel, newerFile, olderFile });
 }
+function createDiffWindow() {
+    return invoke("create_diff_window", {});
+}
+function destroyDiffWindow() {
+    return invoke("destroy_diff_window", {});
+}
 async function offsetOfClientArea(physicalPosition) {
     // 需要考虑 windows 的窗口缩放, 比如 150% 的缩放相应就要缩小为 1.5 分之一
     const window = getCurrentWindow();
@@ -80,14 +86,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     let olderSnapshotFile = undefined;
     const newerFileZone = document.getElementById("newer-file-zone");
     const olderFileZone = document.getElementById("older-file-zone");
-    const newerFilePath = document.getElementById("newer-file-path");
-    const olderFilePath = document.getElementById("older-file-path");
+    const newerFilePathEl = document.getElementById("newer-file-path");
+    const olderFilePathEl = document.getElementById("older-file-path");
     const deselectNewerFileBtn = document.getElementById("deselect-newer-file-btn");
     const deselectOlderFileBtn = document.getElementById("deselect-older-file-btn");
     const newerFileInput = document.getElementById("newer-file-input");
     const olderFileInput = document.getElementById("older-file-input");
     const diffBtn = document.getElementById("diff-btn");
-    const versionText = document.getElementById("version-text");
+    const versionTextEl = document.getElementById("version-text");
     const progressBar = new Progressbar('diff-progress');
     function clearDragover() {
         newerFileZone.classList.remove("dragover");
@@ -108,12 +114,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (isNewer) {
             newerSnapshotFile = path;
             newerFileZone.classList.add("has-file");
-            typingEffect(newerFilePath, "innerText", path);
+            typingEffect(newerFilePathEl, "innerText", path);
         }
         else {
             olderSnapshotFile = path;
             olderFileZone.classList.add("has-file");
-            typingEffect(olderFilePath, "innerText", path);
+            typingEffect(olderFilePathEl, "innerText", path);
         }
         syncDiffBtnDisabled();
     }
@@ -121,7 +127,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (isNewer) {
             // 防止二次点击
             if (newerSnapshotFile !== undefined) {
-                typingEffect(newerFilePath, "innerText", "").then(() => {
+                typingEffect(newerFilePathEl, "innerText", "").then(() => {
                     newerFileZone.classList.remove("has-file");
                 });
             }
@@ -129,7 +135,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
         else {
             if (olderSnapshotFile !== undefined) {
-                typingEffect(olderFilePath, "innerText", "").then(() => {
+                typingEffect(olderFilePathEl, "innerText", "").then(() => {
                     olderFileZone.classList.remove("has-file");
                 });
             }
@@ -183,7 +189,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
         selectFile(false, file);
     });
-    versionText.innerText += await getAppVersion();
+    versionTextEl.textContent += await getAppVersion();
     const links = document.querySelectorAll('a');
     links.forEach(link => {
         // 排除已手动设置 target 的链接
@@ -231,7 +237,8 @@ window.addEventListener("DOMContentLoaded", async () => {
                 }
             };
             await diff(newerSnapshotFile, olderSnapshotFile, channel);
-            // todo 进入 diff 页面
+            await destroyDiffWindow(); // 关闭之前的窗口(如果有)
+            await createDiffWindow();
         }
         catch (e) {
             showToast(e, 'error', 5000);

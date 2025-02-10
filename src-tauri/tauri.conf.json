@@ -11,8 +11,9 @@
     "windows": [
       {
         "title": "WizTree Diff",
-        "width": 1100,
-        "height": 650
+        "width": 1050,
+        "height": 730,
+        "label": "main"
       }
     ],
     "security": {

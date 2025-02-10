@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::ipc::Channel;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use wiztree_diff::{Builder, Diff, Message, ReportProcessingInterval, ReportReadingInterval};
 
 pub(crate) struct DiffState {
@@ -93,5 +93,26 @@ pub async fn diff(
         .build_from_file(&newer_file, true)?;
     let diff = Diff::new(newer_snapshot, older_snapshot);
     diff_state.diff = Some(diff);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn create_diff_window(app: AppHandle) -> Result<(), Error> {
+    // new 这个调用必须使用 async command: https://docs.rs/tauri/latest/tauri/webview/struct.WebviewWindowBuilder.html#implementations
+    // 动态创建的窗口不用填到 tauri.conf.json 中
+    let win = WebviewWindowBuilder::new(
+        &app,
+        "diff",
+        WebviewUrl::App("diff.html".into()))
+        .build()?;
+    win.show()?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn destroy_diff_window(app: AppHandle) -> Result<(), Error> {
+    app.get_webview_window("diff")
+        .map(|w| w.destroy())
+        .unwrap_or(Ok(()))?;
     Ok(())
 }

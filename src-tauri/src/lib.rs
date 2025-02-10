@@ -3,7 +3,7 @@
 mod commands;
 mod error;
 
-use crate::commands::{get_app_version, DiffState, diff};
+use commands::{get_app_version, DiffState, diff, create_diff_window, destroy_diff_window};
 use std::sync::Mutex;
 use tauri::Manager;
 
@@ -12,7 +12,12 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_app_version, diff])
+        .invoke_handler(tauri::generate_handler![
+            get_app_version,
+            diff,
+            create_diff_window,
+            destroy_diff_window
+        ])
         .setup(|app| {
             app.manage(Mutex::new(DiffState::new()));
             let webview_window = app
