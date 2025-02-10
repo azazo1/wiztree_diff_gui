@@ -36,9 +36,7 @@ class DiffTableRenderer {
 
     private init() {
         this.setupResizableColumns();
-        this.renderData().then(() => {
-            this.setupSorting();
-        });
+        this.setupSorting(); // 会触发 renderData
     }
 
     private initNode(node: DiffNode) {
@@ -117,14 +115,19 @@ class DiffTableRenderer {
     }
 
     async renderData() {
-        this.tableBodyEl.innerHTML = '';
         if (data === null) {
             await this.fetchRootNodes();
             this.sortNodes(true);
         }
+        const tableBodyEl = this.tableBodyEl; // 暂存
+        this.tableBodyEl = document.createElement('tbody'); // 创建缓冲区
         for (const node of data) {
             await this.renderNode(node);
         }
+        console.log(this.tableBodyEl.children);
+        tableBodyEl.innerHTML = '';
+        tableBodyEl.append(...this.tableBodyEl.children); // 刷新显示
+        this.tableBodyEl = tableBodyEl;
     }
 
     private async renderNode(nodeData: DiffNode, depth = 0, parentKey = 'root') {
@@ -295,7 +298,7 @@ class DiffTableRenderer {
             // 初始时安装 预先设置的 field 和顺序进行排序
             if (header.dataset.sort === this.sortState.field) {
                 this.sortState.asc = !this.sortState.asc; // 提前置反一次
-                listener();
+                listener(); // 进行排序, 会调用 renderData
             }
         });
     }
