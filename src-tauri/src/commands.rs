@@ -98,6 +98,7 @@ pub async fn diff(
 
 #[tauri::command]
 pub async fn create_diff_window(app: AppHandle) -> Result<(), Error> {
+    // todo 窗口标题
     // new 这个调用必须使用 async command: https://docs.rs/tauri/latest/tauri/webview/struct.WebviewWindowBuilder.html#implementations
     // 动态创建的窗口不用填到 tauri.conf.json 中
     let win = WebviewWindowBuilder::new(

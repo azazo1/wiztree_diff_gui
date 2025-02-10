@@ -39,7 +39,7 @@ body {
 .table-container {
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    overflow: visible;
+    overflow: auto;
     width: 100%;
     height: 100%;
 }
@@ -50,7 +50,7 @@ table {
 }
 
 th {
-    padding: 0.8rem 1rem;
+    padding: 0.3rem 0.5rem;
     text-align: center;
     border-bottom: 1px solid var(--border-color);
     border-right: 2px solid var(--border-color);
@@ -68,16 +68,19 @@ th {
 }
 
 td {
-    padding: 0.8rem 1rem;
+    padding: 0.3rem 0.5rem;
     text-align: right;
     border-bottom: 1px solid var(--border-color);
     border-right: 2px solid var(--border-color);
     white-space: nowrap;
-    overflow: hidden;
+    overflow: auto;
     text-overflow: ellipsis;
 }
 
-td:first-of-type {
+td:first-of-type { /* 存放 Path 的 td */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
     text-align: left;
 }
 
@@ -109,12 +112,6 @@ tr:hover {
 
 .delta-negative {
     color: #e74c3c;
-}
-
-td:first-of-type { /* 存放 Path 的 td */
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
 }
 
 .path {
