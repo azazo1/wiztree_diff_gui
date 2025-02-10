@@ -1,14 +1,3 @@
-type DiffNode = {
-    path: string,
-    kind: 'New' | 'Removed' | 'Changed' | string,
-    folder: boolean,
-    deltaSize: number,
-    deltaAlloc: number,
-    deltaNFiles: number,
-    deltaNFolders: number,
-    children: DiffNode[],
-    expanded: boolean
-}
 const sampleData = {
     kind: 'Changed',
     folder: true,
@@ -89,32 +78,24 @@ const sampleData = {
         }
     ]
 };
-
 class DiffTableRenderer {
-    private tableEl: HTMLTableElement;
-    private tableBodyEl: HTMLTableSectionElement;
-    private sortState: {
-        field: "path" | "kind" | "size" | "alloc" | "files" | "folders" | string;
-        order: "asc" | "desc"
-    };
-
-    constructor(tableEl: HTMLTableElement) {
+    tableEl;
+    tableBodyEl;
+    sortState;
+    constructor(tableEl) {
         this.tableEl = tableEl;
         this.tableBodyEl = this.tableEl.querySelector(".diff-body");
-        this.sortState = {field: "size", order: "asc"};
+        this.sortState = { field: "size", order: "asc" };
         this.init();
     }
-
     init() {
         this.setupResizableColumns();
         this.setupSorting();
         this.render(sampleData);
     }
-
-    render(nodeData: DiffNode, depth = 0, parentKey = 'root') {
+    render(nodeData, depth = 0, parentKey = 'root') {
         const row = this.createRow(nodeData, depth, parentKey);
         this.tableBodyEl.appendChild(row);
-
         if (nodeData.children.length > 0 && nodeData.expanded) {
             nodeData.children.forEach(child => {
                 // todo 实现后端数据的获取和缓存
@@ -122,51 +103,44 @@ class DiffTableRenderer {
             });
         }
     }
-
-    createRow(nodeData: DiffNode, depth, parentKey) {
+    createRow(nodeData, depth, parentKey) {
         const row = document.createElement('tr');
         row.dataset.depth = depth;
         row.dataset.parentKey = parentKey;
-
         const pathCell = document.createElement('td');
         this.inflatePathCell(pathCell, nodeData, depth);
         row.appendChild(pathCell);
-
         row.appendChild(this.createCell(nodeData.kind));
         row.appendChild(this.createDeltaCell(nodeData.deltaSize));
         row.appendChild(this.createDeltaCell(nodeData.deltaAlloc));
         row.appendChild(this.createDeltaCell(nodeData.deltaNFiles));
         row.appendChild(this.createDeltaCell(nodeData.deltaNFolders));
-
         if (nodeData.folder) {
             row.classList.add('folder');
             row.querySelector('.diff-node-expand-toggle')
                 .addEventListener('click', () => this.toggleFolder(nodeData));
-        } else {
+        }
+        else {
             row.classList.add('file');
         }
-
         return row;
     }
-
-    createCell(text: string) {
+    createCell(text) {
         const cell = document.createElement('td');
         console.log(text.toLowerCase());
         cell.classList.add(text.toLowerCase()); // in diff.css: .new, .removed, .changed
         cell.textContent = text;
         return cell;
     }
-
-    createDeltaCell(deltaValue: number) {
+    createDeltaCell(deltaValue) {
         const cell = document.createElement('td');
         cell.className = deltaValue >= 0 ? 'delta-positive' : 'delta-negative';
         cell.textContent = `${deltaValue}`;
         return cell;
     }
-
-    inflatePathCell(cell: HTMLTableCellElement, node: DiffNode, depth: number) {
+    inflatePathCell(cell, node, depth) {
         const indent = document.createElement('span');
-        indent.classList.add("indent")
+        indent.classList.add("indent");
         // depth + 1 是为了让 toggle 能够有位置显示.
         const indentWidth = ((depth + 1) * 20) + 'px';
         indent.style.width = indentWidth;
@@ -190,13 +164,11 @@ class DiffTableRenderer {
         innerCell.appendChild(name);
         cell.appendChild(innerCell);
     }
-
-    toggleFolder(node: DiffNode) {
+    toggleFolder(node) {
         node.expanded = !node.expanded;
         this.tableBodyEl.innerHTML = '';
         this.render(sampleData);
     }
-
     setupResizableColumns() {
         // todo 修复拖动开始时的位移
         const cols = this.tableEl.querySelectorAll('th');
@@ -204,11 +176,9 @@ class DiffTableRenderer {
             const handle = document.createElement('div');
             handle.className = 'resize-handle';
             header.appendChild(handle);
-
             let startX = 0;
             let startWidth = 0;
-
-            handle.addEventListener('mousedown', (e: MouseEvent) => {
+            handle.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
                 startX = e.clientX;
                 startWidth = header.offsetWidth;
@@ -217,8 +187,7 @@ class DiffTableRenderer {
                 // @ts-ignore 临时禁用点击事件, 防止意外触发排序
                 header.removeEventListener('click', header.clickListener);
             });
-
-            const onMouseMove = (e: MouseEvent) => {
+            const onMouseMove = (e) => {
                 e.stopPropagation();
                 let newWidth = startWidth + (e.clientX - startX);
                 if (newWidth < 0) {
@@ -226,8 +195,7 @@ class DiffTableRenderer {
                 }
                 header.style.width = newWidth + 'px';
             };
-
-            const onMouseUp = (e: MouseEvent) => {
+            const onMouseUp = (e) => {
                 e.stopPropagation();
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
@@ -238,32 +206,31 @@ class DiffTableRenderer {
             };
         });
     }
-
     setupSorting() {
-        this.tableEl.querySelectorAll('th.sortable').forEach((header: HTMLTableSectionElement) => {
+        this.tableEl.querySelectorAll('th.sortable').forEach((header) => {
             const orderIcon = document.createElement('span');
             orderIcon.classList.add("sort-order-icon");
             orderIcon.textContent = '';
             header.appendChild(orderIcon);
-            const listener = (_: MouseEvent) => {
+            const listener = (_) => {
                 const field = header.dataset.sort;
                 const order = this.sortState.field === field
                     ? (this.sortState.order === 'asc' ? 'desc' : 'asc')
                     : 'asc';
-                this.tableEl.querySelectorAll('th.sortable').forEach((h: HTMLTableCellElement) => {
+                this.tableEl.querySelectorAll('th.sortable').forEach((h) => {
                     if (h.classList.contains('sort-asc') || h.classList.contains('sort-desc')) {
                         h.classList.remove('sort-asc', 'sort-desc');
                         h.querySelector('span.sort-order-icon').textContent = '';
                     }
                 });
-
                 header.classList.add(`sort-${order}`);
                 if (order === 'asc') {
                     orderIcon.textContent = "▲";
-                } else {
+                }
+                else {
                     orderIcon.textContent = "▼";
                 }
-                this.sortState = {field, order};
+                this.sortState = { field, order };
                 this.sortNodes();
             };
             // @ts-ignore
@@ -271,14 +238,12 @@ class DiffTableRenderer {
             header.addEventListener('click', listener);
         });
     }
-
     sortNodes() {
         // 排序逻辑需要根据当前层级处理兄弟节点
         // 此处为简化实现，示例数据需要调整结构支持排序
         console.log('Sorting by:', this.sortState);
     }
 }
-
 window.addEventListener("DOMContentLoaded", async (_) => {
-    new DiffTableRenderer(document.getElementById("diff-table") as HTMLTableElement);
+    new DiffTableRenderer(document.getElementById("diff-table"));
 });
