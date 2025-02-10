@@ -20,11 +20,13 @@ pub fn run() {
         ])
         .setup(|app| {
             app.manage(Mutex::new(DiffState::new()));
-            let webview_window = app
-                .get_webview_window("main")
-                .ok_or("webview window `main` not found")?;
             #[cfg(debug_assertions)]
-            webview_window.open_devtools();
+            {
+                let webview_window = app
+                    .get_webview_window("main")
+                    .ok_or("webview window `main` not found")?;
+                webview_window.open_devtools();
+            }
             Ok(())
         })
         .run(tauri::generate_context!())
