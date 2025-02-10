@@ -34,6 +34,8 @@ body {
     margin: 20px;
     background-color: var(--bg-color);
     color: var(--text-color);
+    height: 93vh; /* 刚好匹配工作区大小 */
+    overflow: hidden;
 }
 
 .table-container {
@@ -59,8 +61,10 @@ th {
     text-overflow: ellipsis;
     cursor: pointer;
     user-select: none;
-    position: relative;
     background-color: var(--th-bg-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 .sort-order-icon {
