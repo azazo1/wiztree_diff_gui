@@ -14,8 +14,9 @@ class DiffTableRenderer {
     }
     init() {
         this.setupResizableColumns();
-        this.setupSorting();
-        this.renderData().then();
+        this.renderData().then(() => {
+            this.setupSorting();
+        });
     }
     initNode(node) {
         node.expanded = false;
@@ -46,7 +47,7 @@ class DiffTableRenderer {
         if (nodeData.children === null) {
             await this.fetchNodes(nodeData);
         }
-        this.sortNodesUnder(nodeData, true);
+        this.sortNodeArray(nodeData.children);
         const row = this.createRow(nodeData, depth, parentKey);
         this.tableBodyEl.appendChild(row);
         if (nodeData.children && nodeData.expanded) {
@@ -57,7 +58,7 @@ class DiffTableRenderer {
     }
     createRow(nodeData, depth, parentKey) {
         const row = document.createElement('tr');
-        row.dataset.depth = depth;
+        row.dataset.depth = depth.toString();
         row.dataset.parentKey = parentKey;
         const pathCell = document.createElement('td');
         this.inflatePathCell(pathCell, nodeData, depth);
@@ -89,10 +90,13 @@ class DiffTableRenderer {
             cell.className = deltaValue > 0 ? 'delta-positive' : 'delta-negative';
         }
         if (toBytesString) {
-            cell.textContent = bytesToString(deltaValue, true);
+            cell.textContent = bytesToString(deltaValue);
         }
         else {
             cell.textContent = `${deltaValue}`;
+        }
+        if (deltaValue > 0) {
+            cell.textContent = '+' + cell.textContent;
         }
         return cell;
     }
@@ -190,19 +194,27 @@ class DiffTableRenderer {
             // @ts-ignore
             header.clickListener = listener;
             header.addEventListener('click', listener);
+            // 初始时安装 预先设置的 field 进行排序
+            if (header.dataset.sort === this.sortState.field) {
+                listener();
+            }
         });
     }
     sortNodes(onlyExpanded = true) {
         console.log('Sorting by:', this.sortState);
+        if (data === null) {
+            return;
+        }
+        this.sortNodeArray(data);
         for (const node of data) {
             this.sortNodesUnder(node, onlyExpanded);
         }
     }
-    sortNodesUnder(node, onlyExpanded = true) {
-        if (node.children === null) {
-            return;
-        }
-        node.children.sort((a, b) => {
+    /**
+     * 仅对列表的节点进行排序
+     */
+    sortNodeArray(nodes) {
+        nodes.sort((a, b) => {
             let rst = NaN;
             if (this.sortState.field === "path") {
                 // 如果使用 path 排序, 则文件夹优先
@@ -245,6 +257,12 @@ class DiffTableRenderer {
             rst = this.sortState.asc ? rst : -rst;
             return rst;
         });
+    }
+    sortNodesUnder(node, onlyExpanded = true) {
+        if (node.children === null) {
+            return;
+        }
+        this.sortNodeArray(node.children);
         if (onlyExpanded && node.expanded) {
             for (const child of node.children) {
                 this.sortNodesUnder(child, onlyExpanded);
