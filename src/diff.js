@@ -130,7 +130,8 @@ class DiffTableRenderer {
     }
     setupResizableColumns() {
         const cols = this.tableEl.querySelectorAll('th');
-        cols.forEach((header) => {
+        cols.forEach((header, index) => {
+            const col = this.tableEl.querySelector(`col:nth-of-type(${index + 1})`);
             const handle = document.createElement('div');
             handle.className = 'resize-handle';
             header.appendChild(handle);
@@ -139,7 +140,7 @@ class DiffTableRenderer {
             handle.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
                 startX = e.clientX;
-                startWidth = getStyleLikeWidth(header);
+                startWidth = getStyleLikeWidth(col);
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
                 // @ts-ignore 临时禁用点击事件, 防止意外触发排序
@@ -151,7 +152,7 @@ class DiffTableRenderer {
                 if (newWidth < 0) {
                     newWidth = 0;
                 }
-                header.style.width = newWidth + 'px';
+                col.style.width = newWidth + 'px';
             };
             const onMouseUp = (e) => {
                 e.stopPropagation();

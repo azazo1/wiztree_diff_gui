@@ -1,6 +1,7 @@
 // @ts-ignore
 const {invoke} = window.__TAURI__.core;
-
+// todo record 右键菜单
+//   - 提供路径复制功能
 type DiffNode = {
     path: string,
     kind: 'New' | 'Removed' | 'Changed' | string,
@@ -164,7 +165,8 @@ class DiffTableRenderer {
 
     private setupResizableColumns() {
         const cols = this.tableEl.querySelectorAll('th');
-        cols.forEach((header) => {
+        cols.forEach((header, index: number) => {
+            const col = this.tableEl.querySelector(`col:nth-of-type(${index + 1})`) as HTMLTableColElement;
             const handle = document.createElement('div');
             handle.className = 'resize-handle';
             header.appendChild(handle);
@@ -175,7 +177,7 @@ class DiffTableRenderer {
             handle.addEventListener('mousedown', (e: MouseEvent) => {
                 e.stopPropagation();
                 startX = e.clientX;
-                startWidth = getStyleLikeWidth(header);
+                startWidth = getStyleLikeWidth(col);
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
                 // @ts-ignore 临时禁用点击事件, 防止意外触发排序
@@ -188,7 +190,7 @@ class DiffTableRenderer {
                 if (newWidth < 0) {
                     newWidth = 0;
                 }
-                header.style.width = newWidth + 'px';
+                col.style.width = newWidth + 'px';
             };
 
             const onMouseUp = (e: MouseEvent) => {
