@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::ipc::Channel;
-use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, LogicalSize, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use wiztree_diff::{Builder, Diff, Message, ReportProcessingInterval, ReportReadingInterval};
 
 pub(crate) struct DiffState {
@@ -105,6 +105,12 @@ pub async fn create_diff_window(app: AppHandle) -> Result<(), Error> {
         "diff",
         WebviewUrl::App("diff.html".into()))
         .build()?;
+    win.set_size(LogicalSize {
+        width: 900,
+        height: 500,
+    }).unwrap_or_else(|e| {
+        eprintln!("Error setting size: {:?}", e);
+    });
     win.show()?;
     Ok(())
 }
