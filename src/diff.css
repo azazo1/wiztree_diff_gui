@@ -1,10 +1,15 @@
 :root {
-    --bg-color: #ffffff;
+    --bg-color: #f7f7f7;
     --text-color: #333333;
     --border-color: #dddddd;
-    --hover-bg: #f5f5f5;
+    --hover-bg: #f0f0f0;
     --icon-color: #666;
-    --th-bg-color: #f9f9f9;
+    --th-bg-color: #ebebeb;
+    --folder-icon-color: #e6c12e;
+    --file-icon-color: #b0b0b0;
+    --new-color: #007c01;
+    --removed-color: #dfa5a5;
+    --changed-color: #1cb0e6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -15,6 +20,11 @@
         --hover-bg: #2d2d2d;
         --icon-color: #888;
         --th-bg-color: #333333;
+        --folder-icon-color: #f1c40f;
+        --file-icon-color: #c4c4c4;
+        --new-color: #2cfb82;
+        --removed-color: #ae4747;
+        --changed-color: #4ac2ff;
     }
 }
 
@@ -93,7 +103,7 @@ tr:hover {
 }
 
 .delta-positive {
-    color: #2ecc71;
+    color: #31c162;
 }
 
 .delta-negative {
@@ -121,20 +131,31 @@ td:first-of-type { /* 存放 Path 的 td */
     transform: translate(-100%, -50%);
 }
 
-.path .diff-node-icon {
+.path .diff-node-icon-file, .path .diff-node-icon-folder {
     margin-right: 6px;
     height: 1.5rem;
+    width: 1.5rem;
     display: inline-block;
 }
 
+.diff-node-icon-file {
+    mask: url("assets/file.svg") no-repeat center / contain;
+    background-color: var(--file-icon-color);
+}
+
+.diff-node-icon-folder {
+    mask: url("assets/folder.svg") no-repeat center / contain;
+    background-color: var(--folder-icon-color);
+}
+
 .removed {
-    color: var(#f43737);
+    color: var(--removed-color);
 }
 
 .new {
-    color: var(#2ecc71);
+    color: var(--new-color);
 }
 
 .changed {
-    color: var(#46bfff);
+    color: var(--changed-color);
 }

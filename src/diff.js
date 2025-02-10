@@ -145,10 +145,8 @@ class DiffTableRenderer {
         const indentWidth = ((depth + 1) * 20) + 'px';
         indent.style.width = indentWidth;
         indent.style.minWidth = indentWidth;
-        const icon = document.createElement("img");
-        icon.src = node.folder ? "assets/folder.svg" : "assets/file.svg";
-        icon.alt = "";
-        icon.classList.add("diff-node-icon");
+        const icon = document.createElement("span");
+        icon.classList.add(node.folder ? "diff-node-icon-folder" : "diff-node-icon-file");
         const name = document.createElement("span");
         name.textContent = getFileNameComponent(node.path);
         cell.appendChild(indent);
@@ -242,6 +240,8 @@ class DiffTableRenderer {
         // 排序逻辑需要根据当前层级处理兄弟节点
         // 此处为简化实现，示例数据需要调整结构支持排序
         console.log('Sorting by:', this.sortState);
+        // todo 排序时文件夹始终在前面
+        // todo 使用其他排序的时候, 使用 deltaSize 作为子排序
     }
 }
 window.addEventListener("DOMContentLoaded", async (_) => {
