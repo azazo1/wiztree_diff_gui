@@ -4,6 +4,8 @@ use serde::Serialize;
 pub enum Error {
     #[error(transparent)]
     Diff(#[from] wiztree_diff::Error),
+    #[error("No diff value in app state, please invoke `diff` command first")]
+    NoDiffValue,
     #[error("Failed to lock Mutex: {0}")]
     Lock(String),
     #[error(transparent)]
@@ -16,6 +18,7 @@ pub enum ErrorKind {
     Diff(String),
     Lock(String),
     Tauri(String),
+    NoDiffValue(String),
 }
 
 impl Error {
@@ -25,6 +28,7 @@ impl Error {
             Error::Diff(_) => ErrorKind::Diff(e_string),
             Error::Lock(_) => ErrorKind::Lock(e_string),
             Error::Tauri(_) => ErrorKind::Tauri(e_string),
+            Error::NoDiffValue => ErrorKind::NoDiffValue(e_string),
         }
     }
 }

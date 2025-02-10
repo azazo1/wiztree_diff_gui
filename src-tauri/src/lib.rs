@@ -3,7 +3,7 @@
 mod commands;
 mod error;
 
-use commands::{get_app_version, DiffState, diff, create_diff_window, destroy_diff_window};
+use commands::{get_app_version, DiffState, diff, create_diff_window, destroy_diff_window, get_diff_nodes, get_diff_root_nodes};
 use std::sync::Mutex;
 use tauri::Manager;
 
@@ -16,7 +16,9 @@ pub fn run() {
             get_app_version,
             diff,
             create_diff_window,
-            destroy_diff_window
+            destroy_diff_window,
+            get_diff_nodes,
+            get_diff_root_nodes
         ])
         .setup(|app| {
             app.manage(Mutex::new(DiffState::new()));

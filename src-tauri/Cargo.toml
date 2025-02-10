@@ -27,7 +27,7 @@ thiserror = "2.0.11"
 
 [dependencies.wiztree_diff]
 git = "https://github.com/azazo1/wiztree_diff.git"
-rev = "38cfa5bddd6fa969434a0e49cebf31cd12763a9a"
+rev = "f43830b2a2c63d5dd9d2d344670255be945d50e3"
 features = ["sync", "owning_diff"]
 
 #[dependencies.wiztree_diff]

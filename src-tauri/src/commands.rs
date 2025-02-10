@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::ipc::Channel;
 use tauri::{AppHandle, LogicalSize, Manager, State, WebviewUrl, WebviewWindowBuilder};
-use wiztree_diff::{Builder, Diff, Message, ReportProcessingInterval, ReportReadingInterval};
+use wiztree_diff::{Builder, Diff, DiffNode, Message, ReportProcessingInterval, ReportReadingInterval};
 
 pub(crate) struct DiffState {
     diff: Option<Diff>,
@@ -60,7 +60,7 @@ pub async fn diff(
     newer_file: String,
 ) -> Result<(), Error> {
     let diff_state: State<Mutex<DiffState>> = app.state();
-    let mut diff_state = diff_state.lock().map_err(|_| Error::Lock("diff_state".to_owned()))?;
+    let mut diff_state = diff_state.lock().map_err(|e| Error::Lock(e.to_string()))?;
     let r_interval = ReportReadingInterval::Time(Duration::from_millis(100));
     let p_interval = ReportProcessingInterval::Time(Duration::from_millis(100));
     let older_snapshot = Builder::new()
@@ -121,4 +121,22 @@ pub fn destroy_diff_window(app: AppHandle) -> Result<(), Error> {
         .map(|w| w.destroy())
         .unwrap_or(Ok(()))?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_diff_nodes(path: String, app: AppHandle) -> Result<Vec<DiffNode>, Error> {
+    let diff_state: State<Mutex<DiffState>> = app.state();
+    let mut diff_state = diff_state.lock().map_err(|e| Error::Lock(e.to_string()))?;
+    let diff = diff_state.as_mut().ok_or(Error::NoDiffValue)?;
+    diff.view_path(path)?;
+    Ok(diff.nodes().to_vec())
+}
+
+#[tauri::command]
+pub fn get_diff_root_nodes(app: AppHandle) -> Result<Vec<DiffNode>, Error> {
+    let diff_state: State<Mutex<DiffState>> = app.state();
+    let mut diff_state = diff_state.lock().map_err(|e| Error::Lock(e.to_string()))?;
+    let diff = diff_state.as_mut().ok_or(Error::NoDiffValue)?;
+    diff.view_roots();
+    Ok(diff.nodes().to_vec())
 }
