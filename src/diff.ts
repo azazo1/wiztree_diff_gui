@@ -211,7 +211,7 @@ class DiffTableRenderer {
             handle.addEventListener('mousedown', (e: MouseEvent) => {
                 e.stopPropagation();
                 startX = e.clientX;
-                startWidth = header.offsetWidth;
+                startWidth = getStyleLikeWidth(header);
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
                 // @ts-ignore 临时禁用点击事件, 防止意外触发排序
