@@ -12,9 +12,10 @@ type DiffNode = {
 
     children: DiffNode[] | null, // 节点 init 后为 null, fetchNodes 之后为 DiffNode[] (可能为空数组)
     name: string, // 文件夹/文件/磁盘 名
-    expanded: boolean,
+    expanded: boolean, // 是否在表格中展开
 }
 
+// todo 懒显示, 在视口外的节点不渲染
 let data: DiffNode[] | null = null;
 
 class DiffTableRenderer {
@@ -57,8 +58,10 @@ class DiffTableRenderer {
     }
 
     async renderData() {
+        this.tableBodyEl.innerHTML = '';
         if (data === null) {
             await this.fetchRootNodes();
+            this.sortNodes(true);
         }
         for (const node of data) {
             await this.renderNode(node);
@@ -69,7 +72,7 @@ class DiffTableRenderer {
         if (nodeData.children === null) {
             await this.fetchNodes(nodeData);
         }
-
+        this.sortNodesUnder(nodeData, true);
         const row = this.createRow(nodeData, depth, parentKey);
         this.tableBodyEl.appendChild(row);
         if (nodeData.children && nodeData.expanded) {
@@ -152,7 +155,6 @@ class DiffTableRenderer {
 
     toggleFolder(node: DiffNode) {
         node.expanded = !node.expanded;
-        this.tableBodyEl.innerHTML = '';
         this.renderData().then();
     }
 
@@ -221,7 +223,8 @@ class DiffTableRenderer {
                 } else {
                     orderIcon.textContent = "▼";
                 }
-                this.sortNodes({field, asc});
+                this.sortState = {field, asc};
+                this.renderData().then();
             };
             // @ts-ignore
             header.clickListener = listener;
@@ -229,15 +232,57 @@ class DiffTableRenderer {
         });
     }
 
-    private sortNodes(newState?: { field: string, asc: boolean }) {
-        if (newState !== undefined) {
-            this.sortState = newState;
-        }
-        // 排序逻辑需要根据当前层级处理兄弟节点
-        // 此处为简化实现，示例数据需要调整结构支持排序
+    private sortNodes(onlyExpanded: boolean = true) {
         console.log('Sorting by:', this.sortState);
-        // todo 排序时文件夹始终在前面
-        // todo 使用其他排序的时候, 使用 deltaSize 作为子排序
+        for (const node of data) {
+            this.sortNodesUnder(node, onlyExpanded);
+        }
+    }
+
+    private sortNodesUnder(node: DiffNode, onlyExpanded: boolean = true) {
+        if (node.children === null) {
+            return;
+        }
+        node.children.sort((a: DiffNode, b: DiffNode) => {
+            let rst = NaN;
+            if (this.sortState.field === "path") {
+                // 如果使用 path 排序, 则文件夹优先
+                // todo: 把所有兄弟文件节点整合成一个假节点
+                if (a.folder && !b.folder) {
+                    rst = -1;
+                } else if (!a.folder && b.folder) {
+                    rst = 1;
+                } else {
+                    rst = a.path.localeCompare(b.path);
+                }
+            } else if (this.sortState.field === "kind") {
+                rst = a.kind.localeCompare(b.kind);
+            } else if (this.sortState.field === "size") {
+                rst = a.delta_size - b.delta_size;
+            } else if (this.sortState.field === "alloc") {
+                rst = a.delta_alloc - b.delta_alloc;
+            } else if (this.sortState.field === "files") {
+                rst = a.delta_n_files - b.delta_n_files;
+            } else if (this.sortState.field === "folders") {
+                rst = a.delta_n_folders - b.delta_n_folders;
+            } else {
+                throw new Error(`Unknown sort field ${this.sortState.field}`);
+            }
+            // 子排序
+            if (rst === 0 && this.sortState.field !== "path") {
+                rst = a.path.localeCompare(b.path);
+            }
+            if (rst === 0 && this.sortState.field !== "size") {
+                rst = a.delta_size - b.delta_size;
+            }
+            rst = this.sortState.asc ? rst : -rst;
+            return rst;
+        });
+        if (onlyExpanded && node.expanded) {
+            for (const child of node.children) {
+                this.sortNodesUnder(child, onlyExpanded);
+            }
+        }
     }
 }
 

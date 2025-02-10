@@ -1,5 +1,6 @@
 // @ts-ignore
 const { invoke } = window.__TAURI__.core;
+// todo 懒显示, 在视口外的节点不渲染
 let data = null;
 class DiffTableRenderer {
     tableEl;
@@ -32,8 +33,10 @@ class DiffTableRenderer {
         node.children = nodes;
     }
     async renderData() {
+        this.tableBodyEl.innerHTML = '';
         if (data === null) {
             await this.fetchRootNodes();
+            this.sortNodes(true);
         }
         for (const node of data) {
             await this.renderNode(node);
@@ -43,6 +46,7 @@ class DiffTableRenderer {
         if (nodeData.children === null) {
             await this.fetchNodes(nodeData);
         }
+        this.sortNodesUnder(nodeData, true);
         const row = this.createRow(nodeData, depth, parentKey);
         this.tableBodyEl.appendChild(row);
         if (nodeData.children && nodeData.expanded) {
@@ -118,7 +122,6 @@ class DiffTableRenderer {
     }
     toggleFolder(node) {
         node.expanded = !node.expanded;
-        this.tableBodyEl.innerHTML = '';
         this.renderData().then();
     }
     setupResizableColumns() {
@@ -181,22 +184,72 @@ class DiffTableRenderer {
                 else {
                     orderIcon.textContent = "▼";
                 }
-                this.sortNodes({ field, asc });
+                this.sortState = { field, asc };
+                this.renderData().then();
             };
             // @ts-ignore
             header.clickListener = listener;
             header.addEventListener('click', listener);
         });
     }
-    sortNodes(newState) {
-        if (newState !== undefined) {
-            this.sortState = newState;
-        }
-        // 排序逻辑需要根据当前层级处理兄弟节点
-        // 此处为简化实现，示例数据需要调整结构支持排序
+    sortNodes(onlyExpanded = true) {
         console.log('Sorting by:', this.sortState);
-        // todo 排序时文件夹始终在前面
-        // todo 使用其他排序的时候, 使用 deltaSize 作为子排序
+        for (const node of data) {
+            this.sortNodesUnder(node, onlyExpanded);
+        }
+    }
+    sortNodesUnder(node, onlyExpanded = true) {
+        if (node.children === null) {
+            return;
+        }
+        node.children.sort((a, b) => {
+            let rst = NaN;
+            if (this.sortState.field === "path") {
+                // 如果使用 path 排序, 则文件夹优先
+                // todo: 把所有兄弟文件节点整合成一个假节点
+                if (a.folder && !b.folder) {
+                    rst = -1;
+                }
+                else if (!a.folder && b.folder) {
+                    rst = 1;
+                }
+                else {
+                    rst = a.path.localeCompare(b.path);
+                }
+            }
+            else if (this.sortState.field === "kind") {
+                rst = a.kind.localeCompare(b.kind);
+            }
+            else if (this.sortState.field === "size") {
+                rst = a.delta_size - b.delta_size;
+            }
+            else if (this.sortState.field === "alloc") {
+                rst = a.delta_alloc - b.delta_alloc;
+            }
+            else if (this.sortState.field === "files") {
+                rst = a.delta_n_files - b.delta_n_files;
+            }
+            else if (this.sortState.field === "folders") {
+                rst = a.delta_n_folders - b.delta_n_folders;
+            }
+            else {
+                throw new Error(`Unknown sort field ${this.sortState.field}`);
+            }
+            // 子排序
+            if (rst === 0 && this.sortState.field !== "path") {
+                rst = a.path.localeCompare(b.path);
+            }
+            if (rst === 0 && this.sortState.field !== "size") {
+                rst = a.delta_size - b.delta_size;
+            }
+            rst = this.sortState.asc ? rst : -rst;
+            return rst;
+        });
+        if (onlyExpanded && node.expanded) {
+            for (const child of node.children) {
+                this.sortNodesUnder(child, onlyExpanded);
+            }
+        }
     }
 }
 window.addEventListener("DOMContentLoaded", async (_) => {
