@@ -24,5 +24,6 @@ function bytesToString(bytes, positiveSign = false) {
     if (positiveSign && bytes > 0) {
         prefix = "+";
     }
-    return prefix + (bytes / Math.pow(k, i)).toPrecision(3) + " " + sizes[i];
+    const unitNumber = bytes / Math.pow(k, i);
+    return prefix + unitNumber.toFixed(2) + " " + sizes[i];
 }
