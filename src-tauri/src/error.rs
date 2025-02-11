@@ -10,6 +10,13 @@ pub enum Error {
     Lock(String),
     #[error(transparent)]
     Tauri(#[from] tauri::Error),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error("{executable} exit status: {status}")]
+    ExitStatus {
+        executable: String,
+        status: i32,
+    },
 }
 
 #[derive(Serialize)]
@@ -19,6 +26,8 @@ pub enum ErrorKind {
     Lock(String),
     Tauri(String),
     NoDiffValue(String),
+    Io(String),
+    ExitStatus(String),
 }
 
 impl Error {
@@ -29,6 +38,8 @@ impl Error {
             Error::Lock(_) => ErrorKind::Lock(e_string),
             Error::Tauri(_) => ErrorKind::Tauri(e_string),
             Error::NoDiffValue => ErrorKind::NoDiffValue(e_string),
+            Error::Io(_) => ErrorKind::Io(e_string),
+            Error::ExitStatus {..} => ErrorKind::ExitStatus(e_string),
         }
     }
 }

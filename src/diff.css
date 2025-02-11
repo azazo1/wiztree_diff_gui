@@ -2,6 +2,7 @@
 :root {
     --bg-color: #f7f7f7;
     --text-color: #333333;
+    --secondary-text: #7f8c8d;
     --border-color: #dddddd;
     --hover-bg: #f0f0f0;
     --icon-color: #666;
@@ -17,6 +18,7 @@
     :root {
         --bg-color: #1e1e1e;
         --text-color: #e0e0e0;
+        --secondary-text: #bdc3c7;
         --border-color: #444444;
         --hover-bg: #2d2d2d;
         --icon-color: #888;
@@ -165,4 +167,23 @@ tr:hover {
 
 .changed {
     color: var(--changed-color);
+}
+
+h1 {
+    padding-left: 1.5rem;
+    padding-bottom: 0.3rem;
+    padding-top: 0.3rem;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+    text-align: left;
+    color: var(--text-color)
+}
+
+.snapshot-path {
+    color: var(--secondary-text);
+    padding-left: 3rem;
+}
+
+.snapshot-path:last-of-type {
+    padding-bottom: 1rem;
 }

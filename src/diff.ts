@@ -364,7 +364,43 @@ class DiffTableRenderer {
     }
 }
 
+async function getDiffingFiles(): Promise<{ newer: string, older: string }> {
+    let r = await invoke("get_diffing_files", {});
+    return {
+        newer: r[0],
+        older: r[1]
+    }
+}
+
+async function openInExplorer(path: string) {
+    await invoke("open_in_explorer", {path});
+}
+
+async function fillDiffFiles() {
+    const newerEl = document.getElementById("newer-snapshot-path");
+    const olderEl = document.getElementById("older-snapshot-path");
+    const {newer, older} = await getDiffingFiles();
+
+    function openInExplorerListener(path: string) {
+        return () => openInExplorer(path).then();
+    }
+
+    const newerUEl = document.createElement("u");
+    newerUEl.style.cursor = "pointer";
+    newerUEl.style.paddingLeft = "1rem";
+    newerUEl.addEventListener("click", openInExplorerListener(newer));
+    newerUEl.textContent = newer;
+    newerEl.appendChild(newerUEl);
+    const olderUEl = document.createElement("u");
+    olderUEl.style.paddingLeft = "1rem";
+    olderUEl.style.cursor = "pointer";
+    olderUEl.addEventListener("click", openInExplorerListener(older));
+    olderUEl.textContent = older;
+    olderEl.appendChild(olderUEl);
+}
+
 window.addEventListener("DOMContentLoaded", async (_) => {
     bodyFitClient();
+    await fillDiffFiles();
     new DiffTableRenderer(document.getElementById("diff-table") as HTMLTableElement);
 });

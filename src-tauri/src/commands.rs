@@ -10,12 +10,16 @@ use wiztree_diff::{Builder, Diff, DiffNode, Message, ReportProcessingInterval, R
 
 pub(crate) struct DiffState {
     diff: Option<Diff>,
+    older_file: Option<String>,
+    newer_file: Option<String>,
 }
 
 impl DiffState {
     pub(crate) fn new() -> Self {
         Self {
             diff: None,
+            older_file: None,
+            newer_file: None,
         }
     }
 }
@@ -93,7 +97,16 @@ pub async fn diff(
         .build_from_file(&newer_file, true)?;
     let diff = Diff::new(newer_snapshot, older_snapshot);
     diff_state.diff = Some(diff);
+    diff_state.newer_file = Some(newer_file);
+    diff_state.older_file = Some(older_file);
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_diffing_files(app: AppHandle) -> Result<(Option<String>, Option<String>), Error> {
+    let diff_state: State<Mutex<DiffState>> = app.state();
+    let diff_state = diff_state.lock().map_err(|e| Error::Lock(e.to_string()))?;
+    Ok((diff_state.newer_file.clone(), diff_state.older_file.clone()))
 }
 
 #[tauri::command]
@@ -144,4 +157,42 @@ pub fn get_diff_root_nodes(app: AppHandle) -> Result<Vec<DiffNode>, Error> {
     let diff = diff_state.as_mut().ok_or(Error::NoDiffValue)?;
     diff.view_roots();
     Ok(diff.nodes().to_vec())
+}
+
+#[tauri::command]
+pub fn open_in_explorer(path: &str) -> Result<(), Error> {
+    // 检查路径是否存在
+    std::fs::metadata(path)?;
+    // 根据操作系统执行不同的命令
+    let mut cmd = {
+        if cfg!(target_os = "windows") {
+            let mut cmd = std::process::Command::new("explorer.exe");
+            cmd.arg("/select,").arg(path);
+            cmd
+        } else if cfg!(target_os = "macos") {
+            let mut cmd = std::process::Command::new("open");
+            cmd.arg(path);
+            cmd
+        } else if cfg!(target_os = "linux") {
+            let mut cmd = std::process::Command::new("xdg-open");
+            cmd.arg(path);
+            cmd
+        } else {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Unsupported platform",
+            ))?
+        }
+    };
+    let exit_status = cmd.status()?;
+    if !exit_status.success() {
+        Err(Error::ExitStatus {
+            executable: cmd.get_args()
+                .map(|a| a.to_string_lossy().to_string())
+                .collect::<Vec<String>>()
+                .join(" "),
+            status: exit_status.code().unwrap_or(-1),
+        })?
+    }
+    Ok(())
 }
