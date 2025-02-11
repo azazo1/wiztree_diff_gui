@@ -55,10 +55,7 @@ body {
     background: var(--background-color);
     color: var(--text-color);
     margin: 0;
-    padding: 2rem;
-    min-height: 100vh;
     transition: background-color 0.3s ease, color 0.3s ease;
-    /*overflow: hidden;*/ /* 禁止滚动 */
 }
 
 .container {

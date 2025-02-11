@@ -1,12 +1,4 @@
 'use strict';
-// @ts-ignore
-const { Channel, invoke } = window.__TAURI__.core;
-// @ts-ignore
-const { getCurrentWebview } = window.__TAURI__.webview;
-// @ts-ignore
-const { getCurrentWindow } = window.__TAURI__.window;
-// @ts-ignore
-let dialogOpen = window.__TAURI_PLUGIN_DIALOG__.open;
 async function getAppVersion() {
     return await invoke("get_app_version", {});
 }
@@ -18,21 +10,6 @@ function createDiffWindow() {
 }
 function destroyDiffWindow() {
     return invoke("destroy_diff_window", {});
-}
-async function offsetOfClientArea(physicalPosition) {
-    // 需要考虑 windows 的窗口缩放, 比如 150% 的缩放相应就要缩小为 1.5 分之一
-    const window = getCurrentWindow();
-    const x = physicalPosition.x;
-    const y = physicalPosition.y;
-    const scaleFactor = await window.scaleFactor();
-    return {
-        x: Math.round(x / scaleFactor),
-        y: Math.round(y / scaleFactor)
-    };
-}
-async function elementsFromPhysicalPosition(physicalPosition) {
-    const pos = await offsetOfClientArea(physicalPosition);
-    return document.elementsFromPoint(pos.x, pos.y);
 }
 async function zoneFromPosition(physicalPos) {
     const eles = await elementsFromPhysicalPosition(physicalPos);
@@ -245,4 +222,5 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
     });
     vacantProgressBar();
+    bodyFitClient();
 });

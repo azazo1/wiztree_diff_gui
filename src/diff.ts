@@ -1,5 +1,3 @@
-// @ts-ignore
-const {invoke} = window.__TAURI__.core;
 // todo record 右键菜单
 //   - 提供路径复制功能
 type DiffNode = {
@@ -124,7 +122,6 @@ class DiffTableRenderer {
         for (const node of data) {
             await this.renderNode(node);
         }
-        console.log(this.tableBodyEl.children);
         tableBodyEl.innerHTML = '';
         tableBodyEl.append(...this.tableBodyEl.children); // 刷新显示
         this.tableBodyEl = tableBodyEl;
@@ -368,5 +365,6 @@ class DiffTableRenderer {
 }
 
 window.addEventListener("DOMContentLoaded", async (_) => {
+    bodyFitClient();
     new DiffTableRenderer(document.getElementById("diff-table") as HTMLTableElement);
 });

@@ -31,11 +31,9 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    margin: 20px;
     background-color: var(--bg-color);
     color: var(--text-color);
-    height: 93vh; /* 刚好匹配工作区大小 */
-    overflow: hidden;
+    margin: 0;
 }
 
 .table-container {
@@ -44,6 +42,7 @@ body {
     overflow: auto;
     width: 100%;
     height: 100%;
+    margin: 15px;
 }
 
 table {
